@@ -81,7 +81,7 @@ const Dashboard = () => {
         <StatCard
           title="Pending Payments"
           value={stats?.pending_payments || 0}
-          icon="Alert Circle}
+          icon={AlertCircle}
           color="text-red-600"
           testId="stat-pending-payments"
         />
