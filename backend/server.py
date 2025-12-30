@@ -1,30 +1,15 @@
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import date, datetime, timezone
 import os
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
 
-from database import get_db, init_db
-from models import (
-    User, Client, Project, Vendor, Vehicle, Driver, Promoter,
-    Campaign, Expense, Report, Payment, UserRole, ExpenseStatus, PaymentStatus
-)
-from schemas import (
-    UserCreate, UserLogin, UserResponse, TokenResponse,
-    ClientCreate, ClientResponse, ProjectCreate, ProjectResponse,
-    VendorCreate, VendorResponse, VehicleCreate, VehicleResponse,
-    DriverCreate, DriverResponse, PromoterCreate, PromoterResponse,
-    CampaignCreate, CampaignResponse, ExpenseCreate, ExpenseResponse,
-    ReportCreate, ReportResponse, DashboardStats
-)
-from auth import (
-    get_password_hash, verify_password, create_access_token,
-    get_current_user, require_role
-)
+from auth import get_password_hash, verify_password, create_access_token, get_current_user, require_role
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -32,10 +17,15 @@ load_dotenv(ROOT_DIR / '.env')
 app = FastAPI(title="Fleet Operations Management API")
 api_router = APIRouter(prefix="/api")
 
+# MongoDB connection
+mongo_url = os.environ['MONGO_URL']
+client = AsyncIOMotorClient(mongo_url)
+db = client[os.environ['DB_NAME']]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.getenv('CORS_ORIGINS', '*').split(','),
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -43,373 +33,323 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
-    logger.info("Database initialized")
+# Enums
+class UserRole:
+    ADMIN = "admin"
+    CLIENT_SERVICING = "client_servicing"
+    OPERATIONS_MANAGER = "operations_manager"
+    ACCOUNTS = "accounts"
+    VENDOR = "vendor"
+    CLIENT = "client"
+
+# Schemas
+class UserCreate(BaseModel):
+    email: EmailStr
+    name: str
+    phone: Optional[str] = None
+    password: str
+    role: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    phone: Optional[str]
+    role: str
+    is_active: bool
+    created_at: datetime
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+class DashboardStats(BaseModel):
+    active_projects: int
+    running_campaigns: int
+    vehicles_on_ground: int
+    todays_expense: float
+    pending_expenses: int
+    pending_payments: int
+
+# Helper to convert MongoDB doc to response
+def doc_to_dict(doc):
+    if doc and "_id" in doc:
+        doc["id"] = str(doc.pop("_id"))
+    return doc
 
 # Auth Routes
 @api_router.post("/auth/register", response_model=UserResponse)
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == user_data.email))
-    if result.scalar_one_or_none():
+async def register(user_data: UserCreate):
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    user = User(
-        email=user_data.email,
-        name=user_data.name,
-        phone=user_data.phone,
-        password_hash=get_password_hash(user_data.password),
-        role=user_data.role
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
+    user_dict = user_data.model_dump()
+    user_dict["password_hash"] = get_password_hash(user_dict.pop("password"))
+    user_dict["is_active"] = True
+    user_dict["created_at"] = datetime.now(timezone.utc)
+    
+    result = await db.users.insert_one(user_dict)
+    user_dict["id"] = str(result.inserted_id)
+    user_dict.pop("password_hash")
+    return user_dict
 
 @api_router.post("/auth/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == credentials.email))
-    user = result.scalar_one_or_none()
+async def login(credentials: UserLogin):
+    user = await db.users.find_one({"email": credentials.email})
     
-    if not user or not verify_password(credentials.password, user.password_hash):
+    if not user or not verify_password(credentials.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not user.is_active:
+    if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="User account is inactive")
     
-    access_token = create_access_token(data={"user_id": user.id, "email": user.email})
+    access_token = create_access_token(data={"user_id": str(user["_id"]), "email": user["email"]})
+    user_response = doc_to_dict(user.copy())
+    user_response.pop("password_hash", None)
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": user
+        "user": user_response
     }
 
 @api_router.get("/auth/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+async def get_me(current_user: dict = Depends(get_current_user)):
+    user = await db.users.find_one({"email": current_user.get("email")})
+    user_dict = doc_to_dict(user)
+    user_dict.pop("password_hash", None)
+    return user_dict
 
-# Dashboard Route
+# Dashboard
 @api_router.get("/dashboard/stats", response_model=DashboardStats)
-async def get_dashboard_stats(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    today = date.today()
+async def get_dashboard_stats():
+    today = date.today().isoformat()
     
-    active_projects = await db.execute(select(func.count(Project.id)).where(Project.status == "active"))
-    running_campaigns = await db.execute(select(func.count(Campaign.id)).where(Campaign.status == "running"))
-    vehicles_on_ground = await db.execute(select(func.count(Vehicle.id)).where(Vehicle.is_active == True))
+    active_projects = await db.projects.count_documents({"status": "active"})
+    running_campaigns = await db.campaigns.count_documents({"status": "running"})
+    vehicles_on_ground = await db.vehicles.count_documents({"is_active": True})
     
-    todays_expenses = await db.execute(
-        select(func.coalesce(func.sum(Expense.amount), 0)).where(Expense.submitted_date == today)
-    )
+    expenses_pipeline = [
+        {"$match": {"submitted_date": today}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    todays_expenses = await db.expenses.aggregate(expenses_pipeline).to_list(1)
+    todays_expense = todays_expenses[0]["total"] if todays_expenses else 0
     
-    pending_expenses = await db.execute(
-        select(func.count(Expense.id)).where(Expense.status == ExpenseStatus.PENDING)
-    )
-    
-    pending_payments = await db.execute(
-        select(func.count(Payment.id)).where(Payment.status == PaymentStatus.PENDING)
-    )
+    pending_expenses = await db.expenses.count_documents({"status": "pending"})
+    pending_payments = await db.payments.count_documents({"status": "pending"})
     
     return DashboardStats(
-        active_projects=active_projects.scalar() or 0,
-        running_campaigns=running_campaigns.scalar() or 0,
-        vehicles_on_ground=vehicles_on_ground.scalar() or 0,
-        todays_expense=todays_expenses.scalar() or 0,
-        pending_expenses=pending_expenses.scalar() or 0,
-        pending_payments=pending_payments.scalar() or 0
+        active_projects=active_projects,
+        running_campaigns=running_campaigns,
+        vehicles_on_ground=vehicles_on_ground,
+        todays_expense=todays_expense,
+        pending_expenses=pending_expenses,
+        pending_payments=pending_payments
     )
 
-# Client Routes
-@api_router.post("/clients", response_model=ClientResponse)
-async def create_client(
-    client_data: ClientCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.CLIENT_SERVICING]))
-):
-    client = Client(**client_data.model_dump())
-    db.add(client)
-    await db.commit()
-    await db.refresh(client)
-    return client
+# Generic CRUD routes
+@api_router.post("/clients")
+async def create_client(data: dict):
+    data["is_active"] = True
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.clients.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/clients", response_model=list[ClientResponse])
-async def get_clients(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Client).where(Client.is_active == True))
-    return result.scalars().all()
+@api_router.get("/clients")
+async def get_clients():
+    clients = await db.clients.find({"is_active": True}).to_list(1000)
+    return [doc_to_dict(c) for c in clients]
 
-@api_router.get("/clients/{client_id}", response_model=ClientResponse)
-async def get_client(
-    client_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Client).where(Client.id == client_id))
-    client = result.scalar_one_or_none()
+@api_router.get("/clients/{client_id}")
+async def get_client(client_id: str):
+    from bson import ObjectId
+    client = await db.clients.find_one({"_id": ObjectId(client_id)})
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    return client
+    return doc_to_dict(client)
 
-# Project Routes
-@api_router.post("/projects", response_model=ProjectResponse)
-async def create_project(
-    project_data: ProjectCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.CLIENT_SERVICING]))
-):
-    project = Project(**project_data.model_dump())
-    db.add(project)
-    await db.commit()
-    await db.refresh(project)
-    return project
+@api_router.post("/projects")
+async def create_project(data: dict):
+    data["status"] = data.get("status", "active")
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.projects.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/projects", response_model=list[ProjectResponse])
-async def get_projects(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Project))
-    return result.scalars().all()
+@api_router.get("/projects")
+async def get_projects():
+    projects = await db.projects.find().to_list(1000)
+    return [doc_to_dict(p) for p in projects]
 
-@api_router.get("/projects/{project_id}", response_model=ProjectResponse)
-async def get_project(
-    project_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project = result.scalar_one_or_none()
+@api_router.get("/projects/{project_id}")
+async def get_project(project_id: str):
+    from bson import ObjectId
+    project = await db.projects.find_one({"_id": ObjectId(project_id)})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    return project
+    return doc_to_dict(project)
 
-# Vendor Routes
-@api_router.post("/vendors", response_model=VendorResponse)
-async def create_vendor(
-    vendor_data: VendorCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.OPERATIONS_MANAGER]))
-):
-    vendor = Vendor(**vendor_data.model_dump())
-    db.add(vendor)
-    await db.commit()
-    await db.refresh(vendor)
-    return vendor
+@api_router.post("/vendors")
+async def create_vendor(data: dict):
+    data["is_active"] = True
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.vendors.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/vendors", response_model=list[VendorResponse])
-async def get_vendors(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Vendor).where(Vendor.is_active == True))
-    return result.scalars().all()
+@api_router.get("/vendors")
+async def get_vendors():
+    vendors = await db.vendors.find({"is_active": True}).to_list(1000)
+    return [doc_to_dict(v) for v in vendors]
 
-@api_router.get("/vendors/{vendor_id}", response_model=VendorResponse)
-async def get_vendor(
-    vendor_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
-    vendor = result.scalar_one_or_none()
+@api_router.get("/vendors/{vendor_id}")
+async def get_vendor(vendor_id: str):
+    from bson import ObjectId
+    vendor = await db.vendors.find_one({"_id": ObjectId(vendor_id)})
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    return vendor
+    return doc_to_dict(vendor)
 
-# Vehicle Routes
-@api_router.post("/vehicles", response_model=VehicleResponse)
-async def create_vehicle(
-    vehicle_data: VehicleCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.OPERATIONS_MANAGER]))
-):
-    vehicle = Vehicle(**vehicle_data.model_dump())
-    db.add(vehicle)
-    await db.commit()
-    await db.refresh(vehicle)
-    return vehicle
+@api_router.post("/vehicles")
+async def create_vehicle(data: dict):
+    data["is_active"] = True
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.vehicles.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/vehicles", response_model=list[VehicleResponse])
-async def get_vehicles(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Vehicle).where(Vehicle.is_active == True))
-    return result.scalars().all()
+@api_router.get("/vehicles")
+async def get_vehicles():
+    vehicles = await db.vehicles.find({"is_active": True}).to_list(1000)
+    return [doc_to_dict(v) for v in vehicles]
 
-@api_router.get("/vehicles/{vehicle_id}", response_model=VehicleResponse)
-async def get_vehicle(
-    vehicle_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Vehicle).where(Vehicle.id == vehicle_id))
-    vehicle = result.scalar_one_or_none()
+@api_router.get("/vehicles/{vehicle_id}")
+async def get_vehicle(vehicle_id: str):
+    from bson import ObjectId
+    vehicle = await db.vehicles.find_one({"_id": ObjectId(vehicle_id)})
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    return vehicle
+    return doc_to_dict(vehicle)
 
-# Driver Routes
-@api_router.post("/drivers", response_model=DriverResponse)
-async def create_driver(
-    driver_data: DriverCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.OPERATIONS_MANAGER]))
-):
-    driver = Driver(**driver_data.model_dump())
-    db.add(driver)
-    await db.commit()
-    await db.refresh(driver)
-    return driver
+@api_router.post("/drivers")
+async def create_driver(data: dict):
+    data["is_active"] = True
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.drivers.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/drivers", response_model=list[DriverResponse])
-async def get_drivers(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Driver).where(Driver.is_active == True))
-    return result.scalars().all()
+@api_router.get("/drivers")
+async def get_drivers():
+    drivers = await db.drivers.find({"is_active": True}).to_list(1000)
+    return [doc_to_dict(d) for d in drivers]
 
-@api_router.get("/drivers/{driver_id}", response_model=DriverResponse)
-async def get_driver(
-    driver_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Driver).where(Driver.id == driver_id))
-    driver = result.scalar_one_or_none()
+@api_router.get("/drivers/{driver_id}")
+async def get_driver(driver_id: str):
+    from bson import ObjectId
+    driver = await db.drivers.find_one({"_id": ObjectId(driver_id)})
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
-    return driver
+    return doc_to_dict(driver)
 
-# Promoter Routes
-@api_router.post("/promoters", response_model=PromoterResponse)
-async def create_promoter(
-    promoter_data: PromoterCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.OPERATIONS_MANAGER]))
-):
-    promoter = Promoter(**promoter_data.model_dump())
-    db.add(promoter)
-    await db.commit()
-    await db.refresh(promoter)
-    return promoter
+@api_router.post("/promoters")
+async def create_promoter(data: dict):
+    data["is_active"] = True
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.promoters.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/promoters", response_model=list[PromoterResponse])
-async def get_promoters(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Promoter).where(Promoter.is_active == True))
-    return result.scalars().all()
+@api_router.get("/promoters")
+async def get_promoters():
+    promoters = await db.promoters.find({"is_active": True}).to_list(1000)
+    return [doc_to_dict(p) for p in promoters]
 
-# Campaign Routes
-@api_router.post("/campaigns", response_model=CampaignResponse)
-async def create_campaign(
-    campaign_data: CampaignCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.CLIENT_SERVICING, UserRole.OPERATIONS_MANAGER]))
-):
-    campaign = Campaign(**campaign_data.model_dump())
-    db.add(campaign)
-    await db.commit()
-    await db.refresh(campaign)
-    return campaign
+@api_router.post("/campaigns")
+async def create_campaign(data: dict):
+    data["status"] = data.get("status", "planning")
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.campaigns.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/campaigns", response_model=list[CampaignResponse])
-async def get_campaigns(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Campaign))
-    return result.scalars().all()
+@api_router.get("/campaigns")
+async def get_campaigns():
+    campaigns = await db.campaigns.find().to_list(1000)
+    return [doc_to_dict(c) for c in campaigns]
 
-@api_router.get("/campaigns/{campaign_id}", response_model=CampaignResponse)
-async def get_campaign(
-    campaign_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Campaign).where(Campaign.id == campaign_id))
-    campaign = result.scalar_one_or_none()
+@api_router.get("/campaigns/{campaign_id}")
+async def get_campaign(campaign_id: str):
+    from bson import ObjectId
+    campaign = await db.campaigns.find_one({"_id": ObjectId(campaign_id)})
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    return campaign
+    return doc_to_dict(campaign)
 
-# Expense Routes
-@api_router.post("/expenses", response_model=ExpenseResponse)
-async def create_expense(
-    expense_data: ExpenseCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    expense = Expense(**expense_data.model_dump())
-    db.add(expense)
-    await db.commit()
-    await db.refresh(expense)
-    return expense
+@api_router.post("/expenses")
+async def create_expense(data: dict):
+    data["status"] = data.get("status", "pending")
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.expenses.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/expenses", response_model=list[ExpenseResponse])
-async def get_expenses(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Expense))
-    return result.scalars().all()
+@api_router.get("/expenses")
+async def get_expenses():
+    expenses = await db.expenses.find().to_list(1000)
+    return [doc_to_dict(e) for e in expenses]
 
 @api_router.patch("/expenses/{expense_id}/approve")
-async def approve_expense(
-    expense_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.ACCOUNTS]))
-):
-    result = await db.execute(select(Expense).where(Expense.id == expense_id))
-    expense = result.scalar_one_or_none()
-    if not expense:
+async def approve_expense(expense_id: str):
+    from bson import ObjectId
+    result = await db.expenses.update_one(
+        {"_id": ObjectId(expense_id)},
+        {"$set": {"status": "approved", "approved_date": date.today().isoformat()}}
+    )
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Expense not found")
-    
-    expense.status = ExpenseStatus.APPROVED
-    expense.approved_date = date.today()
-    await db.commit()
     return {"message": "Expense approved"}
 
-# Report Routes
-@api_router.post("/reports", response_model=ReportResponse)
-async def create_report(
-    report_data: ReportCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.OPERATIONS_MANAGER]))
-):
-    report = Report(**report_data.model_dump())
-    db.add(report)
-    await db.commit()
-    await db.refresh(report)
-    return report
+@api_router.post("/reports")
+async def create_report(data: dict):
+    data["created_at"] = datetime.now(timezone.utc)
+    result = await db.reports.insert_one(data)
+    data["id"] = str(result.inserted_id)
+    data.pop("_id", None)
+    return data
 
-@api_router.get("/reports", response_model=list[ReportResponse])
-async def get_reports(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Report))
-    return result.scalars().all()
+@api_router.get("/reports")
+async def get_reports():
+    reports = await db.reports.find().to_list(1000)
+    return [doc_to_dict(r) for r in reports]
 
-@api_router.get("/reports/campaign/{campaign_id}", response_model=list[ReportResponse])
-async def get_campaign_reports(
-    campaign_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(Report).where(Report.campaign_id == campaign_id))
-    return result.scalars().all()
+@api_router.get("/reports/campaign/{campaign_id}")
+async def get_campaign_reports(campaign_id: str):
+    reports = await db.reports.find({"campaign_id": campaign_id}).to_list(1000)
+    return [doc_to_dict(r) for r in reports]
 
 app.include_router(api_router)
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "fleet-operations-api"}
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    client.close()
