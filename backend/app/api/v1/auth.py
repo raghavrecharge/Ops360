@@ -1,0 +1,24 @@
+from fastapi import APIRouter, Depends, status
+from app.schemas.auth import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.services.auth_service import AuthService
+from app.core.security import get_current_user
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(user_data: UserCreate):
+    """Register a new user"""
+    service = AuthService()
+    return await service.register_user(user_data)
+
+@router.post("/login", response_model=TokenResponse)
+async def login(credentials: UserLogin):
+    """Login and get access token"""
+    service = AuthService()
+    return await service.login_user(credentials)
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    """Get current user information"""
+    service = AuthService()
+    return await service.get_current_user_info(current_user["email"])
