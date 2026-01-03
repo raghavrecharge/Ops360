@@ -1,65 +1,68 @@
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+from sqlalchemy import select, update, delete, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
-from bson import ObjectId
-from app.database.connection import get_database
-from app.database.base import doc_to_dict
 
 class BaseRepository:
-    """Base repository with common CRUD operations"""
+    """Base repository with common CRUD operations using SQLAlchemy"""
     
-    def __init__(self, collection_name: str):
-        self.collection_name = collection_name
+    def __init__(self, model):
+        self.model = model
     
-    @property
-    def collection(self):
-        db = get_database()
-        return db[self.collection_name]
+    async def create(self, db: AsyncSession, data: Dict[str, Any]):
+        """Create a new record"""
+        obj = self.model(**data)
+        db.add(obj)
+        await db.commit()
+        await db.refresh(obj)
+        return obj
     
-    async def create(self, data: dict) -> dict:
-        """Create a new document"""
-        data["created_at"] = datetime.now(timezone.utc)
-        data["updated_at"] = datetime.now(timezone.utc)
-        data["is_active"] = data.get("is_active", True)
+    async def get_by_id(self, db: AsyncSession, id: int):
+        """Get record by ID"""
+        result = await db.execute(select(self.model).where(self.model.id == id))
+        return result.scalar_one_or_none()
+    
+    async def get_all(self, db: AsyncSession, filters: Dict[str, Any] = None, limit: int = 1000):
+        """Get all records with optional filters"""
+        query = select(self.model)
         
-        result = await self.collection.insert_one(data)
-        data["id"] = str(result.inserted_id)
-        data.pop("_id", None)
-        return data
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    query = query.where(getattr(self.model, key) == value)
+        
+        query = query.limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
     
-    async def get_by_id(self, id: str) -> Optional[dict]:
-        """Get document by ID"""
-        doc = await self.collection.find_one({"_id": ObjectId(id)})
-        return doc_to_dict(doc) if doc else None
+    async def update(self, db: AsyncSession, id: int, data: Dict[str, Any]):
+        """Update record by ID"""
+        data['updated_at'] = datetime.now(timezone.utc)
+        
+        stmt = update(self.model).where(self.model.id == id).values(**data)
+        await db.execute(stmt)
+        await db.commit()
+        
+        return await self.get_by_id(db, id)
     
-    async def get_all(self, filters: dict = None, limit: int = 1000) -> List[dict]:
-        """Get all documents with optional filters"""
-        filters = filters or {}
-        cursor = self.collection.find(filters).limit(limit)
-        docs = await cursor.to_list(length=limit)
-        return [doc_to_dict(doc) for doc in docs]
-    
-    async def update(self, id: str, data: dict) -> Optional[dict]:
-        """Update document by ID"""
-        data["updated_at"] = datetime.now(timezone.utc)
-        result = await self.collection.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": data}
+    async def delete(self, db: AsyncSession, id: int) -> bool:
+        """Soft delete record by ID"""
+        stmt = update(self.model).where(self.model.id == id).values(
+            is_active=False,
+            updated_at=datetime.now(timezone.utc)
         )
-        
-        if result.matched_count == 0:
-            return None
-        
-        return await self.get_by_id(id)
+        result = await db.execute(stmt)
+        await db.commit()
+        return result.rowcount > 0
     
-    async def delete(self, id: str) -> bool:
-        """Soft delete document by ID"""
-        result = await self.collection.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}}
-        )
-        return result.matched_count > 0
-    
-    async def count(self, filters: dict = None) -> int:
-        """Count documents"""
-        filters = filters or {}
-        return await self.collection.count_documents(filters)
+    async def count(self, db: AsyncSession, filters: Dict[str, Any] = None) -> int:
+        """Count records"""
+        query = select(func.count(self.model.id))
+        
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    query = query.where(getattr(self.model, key) == value)
+        
+        result = await db.execute(query)
+        return result.scalar()
