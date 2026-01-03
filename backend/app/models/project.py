@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Float, Date, ForeignKey
+from sqlalchemy import Column, String, Text, Float, Date, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 from app.models.base import Base, BaseModel
 
@@ -17,5 +17,3 @@ class Project(Base, BaseModel):
     # Relationships
     client = relationship("Client", back_populates="projects")
     campaigns = relationship("Campaign", back_populates="project", cascade="all, delete-orphan")
-
-from sqlalchemy import Integer
