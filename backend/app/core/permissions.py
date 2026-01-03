@@ -14,10 +14,13 @@ class Permission:
     """Role-based permission checker"""
     
     @staticmethod
-    def require_roles(allowed_roles: list[UserRole]):
+    def require_roles(allowed_roles: list):
         async def role_checker(current_user: dict = Depends(get_current_user)):
             user_role = current_user.get("role")
-            if user_role not in [role.value for role in allowed_roles]:
+            # Handle both string roles and enum roles
+            allowed_role_values = [role if isinstance(role, str) else role.value for role in allowed_roles]
+            
+            if user_role not in allowed_role_values:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Not enough permissions"
