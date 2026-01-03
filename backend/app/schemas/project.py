@@ -5,7 +5,7 @@ from datetime import date, datetime
 class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
-    client_id: str
+    client_id: int
     budget: Optional[float] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -24,7 +24,7 @@ class ProjectUpdate(BaseModel):
     assigned_cs: Optional[str] = None
 
 class ProjectResponse(ProjectBase):
-    id: str
+    id: int
     status: str
     created_at: datetime
     

@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import date, datetime
 
 class ReportBase(BaseModel):
-    campaign_id: str
+    campaign_id: int
     report_date: date
     locations_covered: Optional[str] = None
     km_travelled: Optional[float] = None
@@ -22,7 +22,7 @@ class ReportUpdate(BaseModel):
     notes: Optional[str] = None
 
 class ReportResponse(ReportBase):
-    id: str
+    id: int
     created_at: datetime
     
     class Config:

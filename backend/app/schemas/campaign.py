@@ -21,7 +21,7 @@ class CampaignStatus(str, Enum):
 class CampaignBase(BaseModel):
     name: str
     description: Optional[str] = None
-    project_id: str
+    project_id: int
     campaign_type: CampaignType
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -42,7 +42,7 @@ class CampaignUpdate(BaseModel):
     locations: Optional[str] = None
 
 class CampaignResponse(CampaignBase):
-    id: str
+    id: int
     status: CampaignStatus
     created_at: datetime
     
@@ -50,7 +50,7 @@ class CampaignResponse(CampaignBase):
         from_attributes = True
 
 class CampaignAssignment(BaseModel):
-    campaign_id: str
+    campaign_id: int
     vehicle_ids: Optional[list[str]] = []
     driver_ids: Optional[list[str]] = []
     promoter_ids: Optional[list[str]] = []

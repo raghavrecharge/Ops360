@@ -22,7 +22,7 @@ class ClientUpdate(BaseModel):
     contact_person: Optional[str] = None
 
 class ClientResponse(ClientBase):
-    id: str
+    id: int
     is_active: bool
     created_at: datetime
     

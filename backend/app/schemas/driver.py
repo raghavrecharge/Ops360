@@ -22,7 +22,7 @@ class DriverUpdate(BaseModel):
     vendor_id: Optional[str] = None
 
 class DriverResponse(DriverBase):
-    id: str
+    id: int
     is_active: bool
     created_at: datetime
     

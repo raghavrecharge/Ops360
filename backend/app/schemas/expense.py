@@ -28,7 +28,7 @@ class ExpenseUpdate(BaseModel):
     status: Optional[ExpenseStatus] = None
 
 class ExpenseResponse(ExpenseBase):
-    id: str
+    id: int
     status: ExpenseStatus
     approved_date: Optional[date]
     created_at: datetime

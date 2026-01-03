@@ -22,7 +22,7 @@ class VendorUpdate(BaseModel):
     contact_person: Optional[str] = None
 
 class VendorResponse(VendorBase):
-    id: str
+    id: int
     is_active: bool
     created_at: datetime
     

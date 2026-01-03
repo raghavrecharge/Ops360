@@ -23,7 +23,7 @@ class VehicleUpdate(BaseModel):
     permit_validity: Optional[date] = None
 
 class VehicleResponse(VehicleBase):
-    id: str
+    id: int
     is_active: bool
     created_at: datetime
     
