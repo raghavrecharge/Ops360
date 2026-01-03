@@ -3,6 +3,7 @@ from typing import List
 from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse
 from app.repositories.driver_repo import DriverRepository
 from app.core.security import get_current_user
+from app.database.connection import get_db
 from app.core.permissions import Permission
 
 router = APIRouter(prefix="/drivers", tags=["Drivers"])

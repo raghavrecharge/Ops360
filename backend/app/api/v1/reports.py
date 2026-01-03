@@ -3,6 +3,7 @@ from typing import List
 from app.schemas.report import ReportCreate, ReportResponse
 from app.repositories.report_repo import ReportRepository
 from app.core.security import get_current_user
+from app.database.connection import get_db
 from app.core.permissions import Permission
 
 router = APIRouter(prefix="/reports", tags=["Reports"])

@@ -3,6 +3,7 @@ from typing import List
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleResponse
 from app.repositories.vehicle_repo import VehicleRepository
 from app.core.security import get_current_user
+from app.database.connection import get_db
 from app.core.permissions import Permission
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])

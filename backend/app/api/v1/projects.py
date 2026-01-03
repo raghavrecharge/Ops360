@@ -3,6 +3,7 @@ from typing import List
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
 from app.repositories.project_repo import ProjectRepository
 from app.core.security import get_current_user
+from app.database.connection import get_db
 from app.core.permissions import Permission
 
 router = APIRouter(prefix="/projects", tags=["Projects"])

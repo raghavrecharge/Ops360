@@ -3,6 +3,7 @@ from typing import List
 from app.schemas.vendor import VendorCreate, VendorUpdate, VendorResponse
 from app.repositories.vendor_repo import VendorRepository
 from app.core.security import get_current_user
+from app.database.connection import get_db
 from app.core.permissions import Permission
 
 router = APIRouter(prefix="/vendors", tags=["Vendors"])
