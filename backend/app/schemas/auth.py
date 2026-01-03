@@ -14,13 +14,16 @@ class UserLogin(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
-    id: str
+    id: int
     email: str
     name: str
     phone: Optional[str]
     role: str
     is_active: bool
     created_at: datetime
+    
+    class Config:
+        from_attributes = True
 
 class TokenResponse(BaseModel):
     access_token: str
