@@ -1,25 +1,47 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 from app.core.logging import logger
+from contextlib import asynccontextmanager
 
-class Database:
-    client: AsyncIOMotorClient = None
-    db = None
+# Create async engine
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20
+)
 
-async def connect_to_mongo():
-    """Connect to MongoDB"""
-    logger.info("Connecting to MongoDB...")
-    Database.client = AsyncIOMotorClient(settings.MONGO_URL)
-    Database.db = Database.client[settings.DB_NAME]
-    logger.info(f"Connected to MongoDB: {settings.DB_NAME}")
+# Create async session factory
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False,
+    autocommit=False
+)
 
-async def close_mongo_connection():
-    """Close MongoDB connection"""
-    logger.info("Closing MongoDB connection...")
-    if Database.client:
-        Database.client.close()
-    logger.info("MongoDB connection closed")
+async def get_db():
+    """Dependency for getting async database session"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
-def get_database():
-    """Get database instance"""
-    return Database.db
+async def init_db():
+    """Initialize database - create all tables"""
+    from app.models.base import Base
+    from app.models import user, client, project, campaign, vendor, vehicle, driver, expense, report, promoter
+    
+    logger.info("Creating database tables...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created successfully")
+
+async def close_db():
+    """Close database connection"""
+    logger.info("Closing database connection...")
+    await engine.dispose()
+    logger.info("Database connection closed")
