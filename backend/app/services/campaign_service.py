@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.campaign_repo import CampaignRepository
 from app.schemas.campaign import (
     CampaignCreate, CampaignUpdate, CampaignResponse, CampaignAssignment
@@ -9,17 +10,17 @@ class CampaignService:
     def __init__(self):
         self.campaign_repo = CampaignRepository()
     
-    async def create_campaign(self, campaign_data: CampaignCreate) -> CampaignResponse:
+    async def create_campaign(self, db: AsyncSession, campaign_data: CampaignCreate) -> CampaignResponse:
         """Create a new campaign"""
         data = campaign_data.model_dump()
         data["status"] = "planning"
         
-        campaign = await self.campaign_repo.create(data)
-        return CampaignResponse(**campaign)
+        campaign = await self.campaign_repo.create(db, data)
+        return CampaignResponse.model_validate(campaign)
     
-    async def get_campaign(self, campaign_id: str) -> CampaignResponse:
+    async def get_campaign(self, db: AsyncSession, campaign_id: int) -> CampaignResponse:
         """Get campaign by ID"""
-        campaign = await self.campaign_repo.get_by_id(campaign_id)
+        campaign = await self.campaign_repo.get_by_id(db, campaign_id)
         
         if not campaign:
             raise HTTPException(
@@ -27,18 +28,18 @@ class CampaignService:
                 detail="Campaign not found"
             )
         
-        return CampaignResponse(**campaign)
+        return CampaignResponse.model_validate(campaign)
     
-    async def get_all_campaigns(self) -> List[CampaignResponse]:
+    async def get_all_campaigns(self, db: AsyncSession) -> List[CampaignResponse]:
         """Get all campaigns"""
-        campaigns = await self.campaign_repo.get_all()
-        return [CampaignResponse(**c) for c in campaigns]
+        campaigns = await self.campaign_repo.get_all(db)
+        return [CampaignResponse.model_validate(c) for c in campaigns]
     
-    async def update_campaign(self, campaign_id: str, update_data: CampaignUpdate) -> CampaignResponse:
+    async def update_campaign(self, db: AsyncSession, campaign_id: int, update_data: CampaignUpdate) -> CampaignResponse:
         """Update campaign"""
         data = update_data.model_dump(exclude_unset=True)
         
-        campaign = await self.campaign_repo.update(campaign_id, data)
+        campaign = await self.campaign_repo.update(db, campaign_id, data)
         
         if not campaign:
             raise HTTPException(
@@ -46,9 +47,9 @@ class CampaignService:
                 detail="Campaign not found"
             )
         
-        return CampaignResponse(**campaign)
+        return CampaignResponse.model_validate(campaign)
     
-    async def assign_resources(self, assignment: CampaignAssignment):
+    async def assign_resources(self, db: AsyncSession, assignment: CampaignAssignment):
         """Assign vehicles, drivers, and promoters to campaign"""
         # This would involve creating assignment records
         # Simplified for MVP
