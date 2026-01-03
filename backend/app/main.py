@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.database.connection import connect_to_mongo, close_mongo_connection
+from app.database.connection import init_db, close_db
 
 # Import API routers
 from app.api.v1 import (
@@ -17,14 +17,14 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting Fleet Operations Platform...")
-    await connect_to_mongo()
+    await init_db()
     logger.info("Application startup complete")
     
     yield
     
     # Shutdown
     logger.info("Shutting down Fleet Operations Platform...")
-    await close_mongo_connection()
+    await close_db()
     logger.info("Application shutdown complete")
 
 # Create FastAPI application
@@ -62,7 +62,8 @@ async def health_check():
     return {
         "status": "healthy",
         "service": settings.APP_NAME,
-        "version": settings.VERSION
+        "version": settings.VERSION,
+        "database": "MySQL"
     }
 
 @app.get("/")
@@ -71,5 +72,6 @@ async def root():
     return {
         "message": f"Welcome to {settings.APP_NAME}",
         "version": settings.VERSION,
-        "docs": "/docs"
+        "docs": "/docs",
+        "database": "MySQL with SQLAlchemy"
     }
