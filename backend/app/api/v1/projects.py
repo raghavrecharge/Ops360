@@ -20,14 +20,16 @@ async def create_project(
     return ProjectResponse(**project)
 
 @router.get("", response_model=List[ProjectResponse])
-async def get_projects(current_user: dict = Depends(get_current_user)):
+async def get_projects(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all projects"""
     repo = ProjectRepository()
     projects = await repo.get_all()
     return [ProjectResponse(**p) for p in projects]
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
+async def get_project(project_id: str, db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get project by ID"""
     repo = ProjectRepository()
     project = await repo.get_by_id(project_id)

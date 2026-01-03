@@ -18,14 +18,16 @@ async def create_report(
     return ReportResponse(**report)
 
 @router.get("", response_model=List[ReportResponse])
-async def get_reports(current_user: dict = Depends(get_current_user)):
+async def get_reports(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all reports"""
     repo = ReportRepository()
     reports = await repo.get_all()
     return [ReportResponse(**r) for r in reports]
 
 @router.get("/campaign/{campaign_id}", response_model=List[ReportResponse])
-async def get_campaign_reports(campaign_id: str, current_user: dict = Depends(get_current_user)):
+async def get_campaign_reports(campaign_id: str, db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get reports for a specific campaign"""
     repo = ReportRepository()
     reports = await repo.get_by_campaign(campaign_id)

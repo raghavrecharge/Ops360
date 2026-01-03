@@ -17,13 +17,15 @@ async def create_campaign(
     return await service.create_campaign(campaign_data)
 
 @router.get("", response_model=List[CampaignResponse])
-async def get_campaigns(current_user: dict = Depends(get_current_user)):
+async def get_campaigns(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all campaigns"""
     service = CampaignService()
     return await service.get_all_campaigns()
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
-async def get_campaign(campaign_id: str, current_user: dict = Depends(get_current_user)):
+async def get_campaign(campaign_id: str, db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get campaign by ID"""
     service = CampaignService()
     return await service.get_campaign(campaign_id)

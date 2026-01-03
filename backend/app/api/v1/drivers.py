@@ -18,14 +18,16 @@ async def create_driver(
     return DriverResponse(**driver)
 
 @router.get("", response_model=List[DriverResponse])
-async def get_drivers(current_user: dict = Depends(get_current_user)):
+async def get_drivers(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all drivers"""
     repo = DriverRepository()
     drivers = await repo.get_active_drivers()
     return [DriverResponse(**d) for d in drivers]
 
 @router.get("/{driver_id}", response_model=DriverResponse)
-async def get_driver(driver_id: str, current_user: dict = Depends(get_current_user)):
+async def get_driver(driver_id: str, db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get driver by ID"""
     repo = DriverRepository()
     driver = await repo.get_by_id(driver_id)

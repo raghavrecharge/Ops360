@@ -10,6 +10,7 @@ router = APIRouter(prefix="/expenses", tags=["Expenses"])
 @router.post("", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
 async def create_expense(
     expense_data: ExpenseCreate,
+    db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new expense"""
@@ -17,7 +18,8 @@ async def create_expense(
     return await service.create_expense(expense_data)
 
 @router.get("", response_model=List[ExpenseResponse])
-async def get_expenses(current_user: dict = Depends(get_current_user)):
+async def get_expenses(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all expenses"""
     service = ExpenseService()
     return await service.get_all_expenses()

@@ -18,14 +18,16 @@ async def create_vehicle(
     return VehicleResponse(**vehicle)
 
 @router.get("", response_model=List[VehicleResponse])
-async def get_vehicles(current_user: dict = Depends(get_current_user)):
+async def get_vehicles(db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get all vehicles"""
     repo = VehicleRepository()
     vehicles = await repo.get_active_vehicles()
     return [VehicleResponse(**v) for v in vehicles]
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
-async def get_vehicle(vehicle_id: str, current_user: dict = Depends(get_current_user)):
+async def get_vehicle(vehicle_id: str, db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)):
     """Get vehicle by ID"""
     repo = VehicleRepository()
     vehicle = await repo.get_by_id(vehicle_id)
