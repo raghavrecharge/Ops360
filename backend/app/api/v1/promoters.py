@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from app.repositories.base_repo import BaseRepository
