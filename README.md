@@ -262,3 +262,151 @@ For support, email support@fleetops.com or open an issue.
 
 **Version:** 1.0.0  
 **Last Updated:** December 2025
+
+
+## 🔄 Recent Database Migration (v2.0.0)
+
+### MongoDB → MySQL Migration Completed
+
+The backend has been successfully migrated from MongoDB to MySQL with SQLAlchemy ORM. This provides:
+
+✅ **Relational Data Integrity** - Foreign key constraints and referential integrity
+✅ **Improved Query Performance** - Optimized SQL queries with eager loading
+✅ **ACID Compliance** - Full transaction support
+✅ **Enterprise-Grade** - Production-ready setup with health checks
+✅ **Scalability** - Connection pooling and optimized indexes
+
+### What Changed
+
+- **Database**: MongoDB → MySQL 8.0
+- **ORM**: Motor (async MongoDB) → SQLAlchemy + aiomysql
+- **Query Language**: MongoDB queries → SQL (via SQLAlchemy)
+- **Configuration**: `.env` updated with MySQL connection string
+
+### Quick Start with Docker
+
+```bash
+# Clone and setup
+git clone https://github.com/raghavrecharge/Ops360.git
+cd Ops360
+
+# Create .env file
+cp .env.example .env
+# Update DATABASE_URL, SECRET_KEY, and other configs
+
+# Start services
+docker-compose up -d
+
+# Backend available at: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+# PhpMyAdmin: http://localhost:8080
+```
+
+### Production Features Implemented
+
+✨ **API Enhancements**:
+- Full CRUD endpoints for all entities
+- Input validation (Pydantic models)
+- Proper error handling and HTTP status codes
+- Pagination support (skip/limit parameters)
+- Relationship eager loading (selectinload)
+- Comprehensive logging
+
+✨ **Security Hardening**:
+- JWT authentication
+- Role-based access control (RBAC)
+- CORS middleware with configurable origins
+- GZIP compression
+- SQL injection protection via ORM
+- Input validation and sanitization
+
+✨ **Docker Optimization**:
+- Alpine Linux images (minimal footprint)
+- Health checks for all services
+- Persistent volumes for data
+- Environment-based configuration
+- Service dependencies
+- Isolated network
+
+✨ **Performance**:
+- Connection pooling (1000 max connections)
+- Query optimization with selectinload
+- Index-friendly queries
+- GZIP response compression
+- 256MB max allowed packet size
+
+### Database Schema
+
+Key tables: `users`, `clients`, `projects`, `vendors`, `vehicles`, `drivers`, `promoters`, `campaigns`, `expenses`, `reports`, `payments`
+
+All tables include:
+- `id` (primary key)
+- `created_at`, `updated_at` (timestamps)
+- `is_active` (soft delete support)
+
+### Environment Variables
+
+```env
+# MySQL Configuration
+MYSQL_ROOT_PASSWORD=secretpassword
+MYSQL_DATABASE=fleet_operations
+MYSQL_USER=fleetuser
+MYSQL_PASSWORD=fleetpass123
+MYSQL_PORT=3306
+
+# Backend Configuration
+DATABASE_URL=mysql+aiomysql://fleetuser:fleetpass123@mysql:3306/fleet_operations
+SECRET_KEY=your-secret-key-change-in-production
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION=3600
+CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+LOG_LEVEL=INFO
+ENVIRONMENT=production
+
+# Service Ports
+BACKEND_PORT=8000
+PHPMYADMIN_PORT=8080
+```
+
+### API Endpoints
+
+**Authentication:**
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login and get JWT token
+- `GET /api/auth/me` - Get current user
+
+**CRUD Operations:**
+- `/api/clients` - Client management
+- `/api/projects` - Project management
+- `/api/vehicles` - Vehicle management
+- `/api/drivers` - Driver management
+- `/api/vendors` - Vendor management
+- `/api/campaigns` - Campaign management
+- `/api/expenses` - Expense management
+- `/api/reports` - Report management
+
+**Analytics:**
+- `GET /api/dashboard/stats` - Dashboard statistics
+
+**Health:**
+- `GET /health` - Service health check
+
+### Next Steps
+
+1. **Database Migrations** - Set up Alembic for schema versioning
+2. **Testing** - Add comprehensive test suite
+3. **CI/CD** - GitHub Actions for automated deployment
+4. **Monitoring** - Implement APM and logging
+5. **Caching** - Add Redis for performance
+
+### Support & Issues
+
+For issues related to the MySQL migration, please check:
+- Database connection string in `.env`
+- MySQL service health: `docker-compose ps`
+- Logs: `docker-compose logs backend`
+
+---
+
+**Version**: 2.0.0 (MongoDB → MySQL Migration)
+**Last Updated**: January 2026
