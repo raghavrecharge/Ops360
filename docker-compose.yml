@@ -2,23 +2,28 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0-alpine
     container_name: fleet_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: fleetops2025
-      MYSQL_DATABASE: fleet_operations
-      MYSQL_USER: fleetuser
-      MYSQL_PASSWORD: fleetpass123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fleet_operations}
+      MYSQL_USER: ${MYSQL_USER:-fleetuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fleetpass123}
+      MYSQL_INITDB_SKIP_TZINFO: "yes"
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./backend/migrations:/docker-entrypoint-initdb.d
     networks:
       - fleet_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER:-fleetuser}", "-p${MYSQL_PASSWORD:-fleetpass123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password --max_connections=1000 --max_allowed_packet=256M
+    restart: unless-stopped
 
   backend:
     build:
@@ -26,59 +31,52 @@ services:
       dockerfile: Dockerfile
     container_name: fleet_backend
     environment:
-      - DATABASE_URL=mysql+aiomysql://fleetuser:fleetpass123@mysql:3306/fleet_operations
-      - SECRET_KEY=your-secret-key-change-in-production
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=mysql+aiomysql://${MYSQL_USER:-fleetuser}:${MYSQL_PASSWORD:-fleetpass123}@mysql:3306/${MYSQL_DATABASE:-fleet_operations}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION=3600
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     ports:
-      - "8001:8001"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       mysql:
         condition: service_healthy
     volumes:
-      - ./backend:/app/backend
+      - ./backend:/app
+      - backend_logs:/app/logs
     networks:
       - fleet_network
-    command: uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  ml-service:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.ml
-    container_name: fleet_ml_service
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: fleet_phpmyadmin
     environment:
-      - DATABASE_URL=mysql+aiomysql://fleetuser:fleetpass123@mysql:3306/fleet_operations
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      PMA_HOST: mysql
+      PMA_USER: ${MYSQL_USER:-fleetuser}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-fleetpass123}
     ports:
-      - "8002:8002"
+      - "${PHPMYADMIN_PORT:-8080}:80"
     depends_on:
       - mysql
-      - backend
-    volumes:
-      - ./backend:/app/backend
-      - faiss_data:/app/faiss_data
     networks:
       - fleet_network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: fleet_frontend
-    environment:
-      - REACT_APP_BACKEND_URL=http://localhost:8001
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app/frontend
-      - /app/frontend/node_modules
-    networks:
-      - fleet_network
+    restart: unless-stopped
 
 volumes:
   mysql_data:
-  faiss_data:
+    driver: local
+  backend_logs:
+    driver: local
 
 networks:
   fleet_network:
