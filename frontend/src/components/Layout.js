@@ -6,34 +6,42 @@ import {
   FileText, DollarSign, BarChart3, Settings, Menu, X, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
 
 const sidebarItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/clients', icon: Users, label: 'Clients' },
-  { path: '/projects', icon: Briefcase, label: 'Projects' },
-  { path: '/campaigns', icon: Megaphone, label: 'Campaigns' },
-  { path: '/vendors', icon: Building2, label: 'Vendors' },
-  { path: '/vehicles', icon: Truck, label: 'Vehicles' },
-  { path: '/drivers', icon: UserCircle, label: 'Drivers' },
-  { path: '/promoters', icon: UserPlus, label: 'Promoters / Anchors' },
-  { path: '/operations', icon: ClipboardList, label: 'Operations' },
-  { path: '/expenses', icon: Receipt, label: 'Expenses' },
-  { path: '/reports', icon: FileText, label: 'Reports' },
-  { path: '/accounts', icon: DollarSign, label: 'Accounts & Payments' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/', icon: LayoutDashboard, label: 'Dashboard', requiredRoles: [] },
+  { path: '/clients', icon: Users, label: 'Clients', requiredRoles: [] },
+  { path: '/projects', icon: Briefcase, label: 'Projects', requiredRoles: [] },
+  { path: '/campaigns', icon: Megaphone, label: 'Campaigns', requiredRoles: [] },
+  { path: '/vendors', icon: Building2, label: 'Vendors', requiredRoles: [] },
+  { path: '/vehicles', icon: Truck, label: 'Vehicles', requiredRoles: [] },
+  { path: '/drivers', icon: UserCircle, label: 'Drivers', requiredRoles: [] },
+  { path: '/promoters', icon: UserPlus, label: 'Promoters / Anchors', requiredRoles: [] },
+  { path: '/operations', icon: ClipboardList, label: 'Operations', requiredRoles: [] },
+  { path: '/expenses', icon: Receipt, label: 'Expenses', requiredRoles: [] },
+  { path: '/reports', icon: FileText, label: 'Reports', requiredRoles: [] },
+  { path: '/accounts', icon: DollarSign, label: 'Accounts & Payments', requiredRoles: [] },
+  { path: '/analytics', icon: BarChart3, label: 'Analytics', requiredRoles: [] },
+  { path: '/settings', icon: Settings, label: 'Settings', requiredRoles: ['admin'] },
 ];
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { user, logout, isAuthorized } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
+
+  // Filter sidebar items based on user's role
+  const visibleItems = sidebarItems.filter((item) => {
+    if (item.requiredRoles.length === 0) {
+      return true;
+    }
+    return isAuthorized(item.requiredRoles);
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -60,7 +68,7 @@ const Layout = () => {
         </div>
 
         <nav className="p-3 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
-          {sidebarItems.map((item) => (
+          {visibleItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -104,8 +112,8 @@ const Layout = () => {
         <header className="bg-white border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-800">Welcome back, {user.name}</h2>
-              <p className="text-sm text-slate-500 mt-0.5">{user.role}</p>
+              <h2 className="text-xl font-semibold text-slate-800">Welcome back, {user?.name}</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{user?.role}</p>
             </div>
           </div>
         </header>
