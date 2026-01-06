@@ -150,6 +150,7 @@ class PromoterCreate(BaseModel):
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
     specialty: Optional[str] = None
+    language: Optional[str] = None
 
 class PromoterResponse(BaseModel):
     id: int
@@ -157,6 +158,7 @@ class PromoterResponse(BaseModel):
     phone: Optional[str]
     email: Optional[str]
     specialty: Optional[str]
+    language: Optional[str]
     is_active: bool
     created_at: datetime
     

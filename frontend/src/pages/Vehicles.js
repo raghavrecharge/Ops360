@@ -4,6 +4,7 @@ import { vehiclesAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/utils';
 
 const Vehicles = () => {
@@ -11,6 +12,7 @@ const Vehicles = () => {
     queryKey: ['vehicles'],
     queryFn: () => vehiclesAPI.getAll().then(res => res.data),
   });
+  const navigate = useNavigate();
 
   return (
     <div data-testid="vehicles-page">
@@ -19,7 +21,7 @@ const Vehicles = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Vehicles</h1>
           <p className="text-slate-600">Manage your fleet vehicles</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-vehicle-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-vehicle-btn" onClick={() => navigate('/vehicles/new')}>
           <Plus className="mr-2 h-4 w-4" /> Add Vehicle
         </Button>
       </div>
@@ -52,7 +54,7 @@ const Vehicles = () => {
                   <span className="text-slate-600">Insurance:</span>
                   <span className="font-medium">{formatDate(vehicle.insurance_validity)}</span>
                 </div>
-                <Button variant="outline" className="w-full mt-4">View Details</Button>
+                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/vehicles/${vehicle.id}`)}>View Details</Button>
               </CardContent>
             </Card>
           ))

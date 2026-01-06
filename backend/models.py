@@ -146,6 +146,7 @@ class Promoter(Base):
     phone = Column(String(20))
     email = Column(String(255))
     specialty = Column(String(255))
+    language = Column(String(100))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

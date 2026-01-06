@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/utils';
 
 const Clients = () => {
@@ -18,6 +19,7 @@ const Clients = () => {
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.company?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+  const navigate = useNavigate();
 
   return (
     <div data-testid="clients-page">
@@ -26,7 +28,7 @@ const Clients = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Clients</h1>
           <p className="text-slate-600">Manage your client relationships</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-client-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-client-btn" onClick={() => navigate('/clients/new')}>
           <Plus className="mr-2 h-4 w-4" /> Add Client
         </Button>
       </div>
@@ -73,7 +75,7 @@ const Clients = () => {
                       <td className="py-3 px-4 text-slate-600">{client.phone || '-'}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(client.created_at)}</td>
                       <td className="py-3 px-4 text-right">
-                        <Button variant="ghost" size="sm">View</Button>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/clients/${client.id}`)}>View</Button>
                       </td>
                     </tr>
                   ))}

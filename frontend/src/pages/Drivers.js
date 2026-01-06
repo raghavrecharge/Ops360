@@ -4,6 +4,7 @@ import { driversAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/utils';
 
 const Drivers = () => {
@@ -11,6 +12,7 @@ const Drivers = () => {
     queryKey: ['drivers'],
     queryFn: () => driversAPI.getAll().then(res => res.data),
   });
+  const navigate = useNavigate();
 
   return (
     <div data-testid="drivers-page">
@@ -19,7 +21,7 @@ const Drivers = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Drivers</h1>
           <p className="text-slate-600">Manage driver information</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-driver-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-driver-btn" onClick={() => navigate('/drivers/new')}>
           <Plus className="mr-2 h-4 w-4" /> Add Driver
         </Button>
       </div>
@@ -50,7 +52,7 @@ const Drivers = () => {
                   <span className="text-slate-600">Valid Until:</span>
                   <span className="font-medium">{formatDate(driver.license_validity)}</span>
                 </div>
-                <Button variant="outline" className="w-full mt-4">View Details</Button>
+                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/drivers/${driver.id}`)}>View Details</Button>
               </CardContent>
             </Card>
           ))

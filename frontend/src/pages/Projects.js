@@ -4,6 +4,7 @@ import { projectsAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Calendar, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 const Projects = () => {
@@ -11,6 +12,7 @@ const Projects = () => {
     queryKey: ['projects'],
     queryFn: () => projectsAPI.getAll().then(res => res.data),
   });
+  const navigate = useNavigate();
 
   return (
     <div data-testid="projects-page">
@@ -19,7 +21,7 @@ const Projects = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Projects</h1>
           <p className="text-slate-600">Manage your project portfolio</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-project-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-project-btn" onClick={() => navigate('/projects/new')}>
           <Plus className="mr-2 h-4 w-4" /> Add Project
         </Button>
       </div>
@@ -56,7 +58,7 @@ const Projects = () => {
                     <span>{formatDate(project.start_date)} - {formatDate(project.end_date)}</span>
                   </div>
                 )}
-                <Button variant="outline" className="w-full mt-4">View Details</Button>
+                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/projects/${project.id}`)}>View Details</Button>
               </CardContent>
             </Card>
           ))

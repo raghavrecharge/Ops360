@@ -9,7 +9,7 @@ Features:
 
 from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update, and_, or_
 from sqlalchemy.orm import selectinload, joinedload
@@ -19,7 +19,7 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, validator 
 
 from auth import get_password_hash, verify_password, create_access_token, get_current_user, require_role
 from database import get_db, init_db, Base, engine
@@ -45,7 +45,7 @@ app = FastAPI(
 )
 
 # Add middleware
-app.add_middleware(GZIPMiddleware, minimum_size=1000)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -393,6 +393,225 @@ async def create_project(project_data: ProjectCreate, db: AsyncSession = Depends
     logger.info(f"Project created: {project.id}")
     return project
 
+
+# ============== Vendor Routes ==============
+
+class VendorCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    company: Optional[str] = Field(None, max_length=255)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, max_length=20)
+    address: Optional[str] = None
+
+
+class VendorResponse(BaseResponse):
+    id: int
+    name: str
+    company: Optional[str]
+    email: Optional[str]
+    phone: Optional[str]
+    address: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+
+@api_router.post("/vendors", response_model=VendorResponse, status_code=status.HTTP_201_CREATED)
+async def create_vendor(vendor_data: VendorCreate, db: AsyncSession = Depends(get_db)):
+    """Create a new vendor"""
+    vendor = Vendor(**vendor_data.dict())
+    db.add(vendor)
+    await db.commit()
+    await db.refresh(vendor)
+    logger.info(f"Vendor created: {vendor.id}")
+    return vendor
+
+
+@api_router.get("/vendors", response_model=List[VendorResponse])
+async def get_vendors(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Vendor).where(Vendor.is_active == True).offset(skip).limit(limit))
+    return result.scalars().all()
+
+
+@api_router.get("/vendors/{vendor_id}", response_model=VendorResponse)
+async def get_vendor(vendor_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
+    vendor = result.scalar_one_or_none()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return vendor
+
+
+@api_router.put("/vendors/{vendor_id}", response_model=VendorResponse)
+async def update_vendor(vendor_id: int, vendor_data: VendorCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
+    vendor = result.scalar_one_or_none()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    for key, value in vendor_data.dict(exclude_unset=True).items():
+        setattr(vendor, key, value)
+    db.add(vendor)
+    await db.commit()
+    await db.refresh(vendor)
+    logger.info(f"Vendor updated: {vendor_id}")
+    return vendor
+
+
+@api_router.delete("/vendors/{vendor_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_vendor(vendor_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Vendor).where(Vendor.id == vendor_id))
+    vendor = result.scalar_one_or_none()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    vendor.is_active = False
+    db.add(vendor)
+    await db.commit()
+    logger.info(f"Vendor deleted: {vendor_id}")
+
+
+# ============== Promoter Routes ==============
+
+class PromoterCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    specialty: Optional[str] = Field(None, max_length=255)
+    email: Optional[EmailStr] = None
+    language: Optional[str] = Field(None, max_length=100)
+
+
+class PromoterResponse(BaseResponse):
+    id: int
+    name: str
+    phone: Optional[str]
+    specialty: Optional[str]
+    email: Optional[str]
+    language: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+
+@api_router.post("/promoters", response_model=PromoterResponse, status_code=status.HTTP_201_CREATED)
+async def create_promoter(promoter_data: PromoterCreate, db: AsyncSession = Depends(get_db)):
+    promoter = Promoter(**promoter_data.dict())
+    db.add(promoter)
+    await db.commit()
+    await db.refresh(promoter)
+    logger.info(f"Promoter created: {promoter.id}")
+    return promoter
+
+
+@api_router.get("/promoters", response_model=List[PromoterResponse])
+async def get_promoters(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Promoter).where(Promoter.is_active == True).offset(skip).limit(limit))
+    return result.scalars().all()
+
+
+@api_router.get("/promoters/{promoter_id}", response_model=PromoterResponse)
+async def get_promoter(promoter_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Promoter).where(Promoter.id == promoter_id))
+    promoter = result.scalar_one_or_none()
+    if not promoter:
+        raise HTTPException(status_code=404, detail="Promoter not found")
+    return promoter
+
+
+@api_router.put("/promoters/{promoter_id}", response_model=PromoterResponse)
+async def update_promoter(promoter_id: int, promoter_data: PromoterCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Promoter).where(Promoter.id == promoter_id))
+    promoter = result.scalar_one_or_none()
+    if not promoter:
+        raise HTTPException(status_code=404, detail="Promoter not found")
+    for key, value in promoter_data.dict(exclude_unset=True).items():
+        setattr(promoter, key, value)
+    db.add(promoter)
+    await db.commit()
+    await db.refresh(promoter)
+    logger.info(f"Promoter updated: {promoter_id}")
+    return promoter
+
+
+@api_router.delete("/promoters/{promoter_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_promoter(promoter_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Promoter).where(Promoter.id == promoter_id))
+    promoter = result.scalar_one_or_none()
+    if not promoter:
+        raise HTTPException(status_code=404, detail="Promoter not found")
+    promoter.is_active = False
+    db.add(promoter)
+    await db.commit()
+    logger.info(f"Promoter deleted: {promoter_id}")
+
+
+# ============== Campaign Routes ==============
+
+class CampaignCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    project_id: int
+    campaign_type: CampaignType
+    status: Optional[CampaignStatus] = CampaignStatus.PLANNING
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    budget: Optional[float] = Field(None, ge=0)
+    locations: Optional[str] = None
+
+
+class CampaignResponse(BaseResponse):
+    id: int
+    name: str
+    description: Optional[str]
+    project_id: int
+    campaign_type: str
+    status: str
+    start_date: Optional[date]
+    end_date: Optional[date]
+    budget: Optional[float]
+    locations: Optional[str]
+    created_at: datetime
+
+
+@api_router.post("/campaigns", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
+async def create_campaign(campaign_data: CampaignCreate, db: AsyncSession = Depends(get_db)):
+    """Create a new campaign"""
+    # verify project exists
+    proj_result = await db.execute(select(Project).where(Project.id == campaign_data.project_id))
+    if not proj_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    campaign = Campaign(**campaign_data.dict())
+    db.add(campaign)
+    await db.commit()
+    await db.refresh(campaign)
+
+    logger.info(f"Campaign created: {campaign.id}")
+    return campaign
+
+
+@api_router.get("/campaigns", response_model=List[CampaignResponse])
+async def get_campaigns(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Campaign).offset(skip).limit(limit))
+    return result.scalars().all()
+
+
+@api_router.get("/campaigns/{campaign_id}", response_model=CampaignResponse)
+async def get_campaign(campaign_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Campaign).where(Campaign.id == campaign_id))
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    return campaign
+
 @api_router.get("/projects", response_model=List[ProjectResponse])
 async def get_projects(
     skip: int = Query(0, ge=0),
@@ -535,6 +754,21 @@ class ExpenseCreate(BaseModel):
     bill_url: Optional[str] = None
     submitted_date: Optional[date] = None
 
+
+class ExpenseResponse(BaseResponse):
+    id: int
+    campaign_id: Optional[int]
+    driver_id: Optional[int]
+    expense_type: str
+    amount: float
+    description: Optional[str]
+    bill_url: Optional[str]
+    submitted_date: Optional[date]
+    status: Optional[str]
+    approved_date: Optional[date]
+    rejected_date: Optional[date]
+    created_at: datetime
+
 @api_router.post("/expenses", status_code=status.HTTP_201_CREATED)
 async def create_expense(expense_data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Create a new expense"""
@@ -578,6 +812,134 @@ async def approve_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
     
     logger.info(f"Expense approved: {expense_id}")
     return {"message": "Expense approved", "expense_id": expense_id}
+
+
+@api_router.patch("/expenses/{expense_id}/reject")
+async def reject_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
+    """Reject an expense"""
+    result = await db.execute(select(Expense).where(Expense.id == expense_id))
+    expense = result.scalar_one_or_none()
+
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    expense.status = "rejected"
+    expense.rejected_date = date.today()
+
+    db.add(expense)
+    await db.commit()
+
+    logger.info(f"Expense rejected: {expense_id}")
+    return {"message": "Expense rejected", "expense_id": expense_id}
+
+
+@api_router.get("/expenses/{expense_id}", response_model=ExpenseResponse)
+async def get_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Expense).where(Expense.id == expense_id))
+    expense = result.scalar_one_or_none()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    return expense
+
+
+@api_router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
+async def update_expense(expense_id: int, expense_data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Expense).where(Expense.id == expense_id))
+    expense = result.scalar_one_or_none()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    for key, value in expense_data.dict(exclude_unset=True).items():
+        setattr(expense, key, value)
+
+    db.add(expense)
+    await db.commit()
+    await db.refresh(expense)
+    logger.info(f"Expense updated: {expense_id}")
+    return expense
+
+
+
+@api_router.get("/clients/{client_id}/expenses", response_model=List[ExpenseResponse])
+async def get_client_expenses(
+    client_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get expenses related to a client's projects (via campaigns)"""
+    # Join Expense -> Campaign -> Project and filter by project.client_id
+    query = (
+        select(Expense)
+        .join(Campaign, Expense.campaign_id == Campaign.id)
+        .join(Project, Campaign.project_id == Project.id)
+        .where(Project.client_id == client_id)
+        .order_by(Expense.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    return result.scalars().all()
+
+# ============== Report Routes ==============
+
+class ReportCreate(BaseModel):
+    campaign_id: int
+    report_date: date
+    locations_covered: Optional[str] = None
+    km_travelled: Optional[float] = None
+    photos_url: Optional[str] = None
+    gps_data: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ReportResponse(BaseResponse):
+    id: int
+    campaign_id: int
+    report_date: date
+    locations_covered: Optional[str]
+    km_travelled: Optional[float]
+    photos_url: Optional[str]
+    gps_data: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
+
+
+@api_router.post("/reports", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
+async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db)):
+    """Create a new report"""
+    campaign_result = await db.execute(select(Campaign).where(Campaign.id == report_data.campaign_id))
+    if not campaign_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    report = Report(**report_data.dict())
+    db.add(report)
+    await db.commit()
+    await db.refresh(report)
+    return report
+
+@api_router.get("/reports", response_model=List[ReportResponse])
+async def get_reports(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=1000), db: AsyncSession = Depends(get_db)):
+    """List all reports"""
+    result = await db.execute(select(Report).offset(skip).limit(limit))
+    return result.scalars().all()
+
+@api_router.get("/reports/{report_id}", response_model=ReportResponse)
+async def get_report(report_id: int, db: AsyncSession = Depends(get_db)):
+    """Get report by ID"""
+    result = await db.execute(select(Report).where(Report.id == report_id))
+    report = result.scalar_one_or_none()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return report
+
+@api_router.get("/reports/campaign/{campaign_id}", response_model=List[ReportResponse])
+async def get_reports_by_campaign(campaign_id: int, db: AsyncSession = Depends(get_db)):
+    """Get reports by campaign"""
+    result = await db.execute(select(Report).where(Report.campaign_id == campaign_id))
+    return result.scalars().all()
+
+
 
 # ============== Health & Init ==============
 
