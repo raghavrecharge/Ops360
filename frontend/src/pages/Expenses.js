@@ -4,6 +4,7 @@ import { expensesAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 const statusColors = {
@@ -17,6 +18,7 @@ const Expenses = () => {
     queryKey: ['expenses'],
     queryFn: () => expensesAPI.getAll().then(res => res.data),
   });
+  const navigate = useNavigate();
 
   return (
     <div data-testid="expenses-page">
@@ -25,7 +27,7 @@ const Expenses = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Expenses</h1>
           <p className="text-slate-600">Track and approve expenses</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-expense-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-expense-btn" onClick={() => navigate('/expenses/new')}>
           <Plus className="mr-2 h-4 w-4" /> Submit Expense
         </Button>
       </div>
@@ -62,7 +64,7 @@ const Expenses = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <Button variant="ghost" size="sm">View</Button>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/expenses/${expense.id}`)}>View</Button>
                     </td>
                   </tr>
                 ))}

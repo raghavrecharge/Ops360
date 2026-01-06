@@ -1,8 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings as SettingsIcon, Users, Database, Bell } from 'lucide-react';
 
 const Settings = () => {
+  const navigate = useNavigate();
+
+  const go = (path) => () => navigate(path);
+
   return (
     <div data-testid="settings-page">
       <div className="mb-6">
@@ -11,7 +16,7 @@ const Settings = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={go('/settings/roles')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
@@ -25,7 +30,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={go('/settings/master-data')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -39,7 +44,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={go('/settings/notifications')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -53,7 +58,7 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={go('/settings/system')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">

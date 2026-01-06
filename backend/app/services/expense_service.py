@@ -64,3 +64,15 @@ class ExpenseService:
             )
         
         return ExpenseResponse.model_validate(expense)
+
+    async def update_expense(self, db: AsyncSession, expense_id: int, update_data: dict) -> ExpenseResponse:
+        """Update an expense"""
+        expense = await self.expense_repo.update(db, expense_id, update_data)
+
+        if not expense:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Expense not found"
+            )
+
+        return ExpenseResponse.model_validate(expense)

@@ -4,12 +4,14 @@ import { promotersAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Promoters = () => {
   const { data: promoters, isLoading } = useQuery({
     queryKey: ['promoters'],
     queryFn: () => promotersAPI.getAll().then(res => res.data),
   });
+  const navigate = useNavigate();
 
   return (
     <div data-testid="promoters-page">
@@ -18,7 +20,7 @@ const Promoters = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Promoters & Anchors</h1>
           <p className="text-slate-600">Manage promoter and anchor database</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-promoter-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-promoter-btn" onClick={() => navigate('/promoters/new')}>
           <Plus className="mr-2 h-4 w-4" /> Add Promoter
         </Button>
       </div>
@@ -42,7 +44,7 @@ const Promoters = () => {
               </CardHeader>
               <CardContent className="text-center space-y-2">
                 <p className="text-sm text-slate-600">{promoter.phone}</p>
-                <Button variant="outline" size="sm" className="w-full">View Profile</Button>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate(`/promoters/${promoter.id}`)}>View Profile</Button>
               </CardContent>
             </Card>
           ))

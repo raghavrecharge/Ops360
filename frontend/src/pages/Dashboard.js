@@ -97,6 +97,7 @@ const Dashboard = () => {
             <button
               data-testid="quick-action-new-campaign"
               className="p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
+              onClick={() => window.location.href = '/campaigns/new'}
             >
               <Activity className="h-8 w-8 text-slate-400 group-hover:text-indigo-600 mb-2" />
               <h3 className="font-semibold">Create Campaign</h3>
@@ -113,6 +114,7 @@ const Dashboard = () => {
             <button
               data-testid="quick-action-generate-report"
               className="p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all group"
+              onClick={() => window.location.href = '/reports/new'}
             >
               <AlertCircle className="h-8 w-8 text-slate-400 group-hover:text-green-600 mb-2" />
               <h3 className="font-semibold">Generate Report</h3>

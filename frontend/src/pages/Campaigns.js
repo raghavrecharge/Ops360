@@ -4,6 +4,7 @@ import { campaignsAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Calendar, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 const statusColors = {
@@ -16,6 +17,7 @@ const statusColors = {
 };
 
 const Campaigns = () => {
+  const navigate = useNavigate();
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['campaigns'],
     queryFn: () => campaignsAPI.getAll().then(res => res.data),
@@ -28,7 +30,7 @@ const Campaigns = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Campaigns</h1>
           <p className="text-slate-600">Manage and monitor campaign execution</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-campaign-btn">
+        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-campaign-btn" onClick={() => navigate('/campaigns/new')}>
           <Plus className="mr-2 h-4 w-4" /> Create Campaign
         </Button>
       </div>
@@ -75,7 +77,7 @@ const Campaigns = () => {
                     <span className="line-clamp-1">{campaign.locations}</span>
                   </div>
                 )}
-                <Button variant="outline" className="w-full mt-4">Manage Campaign</Button>
+                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/campaigns/${campaign.id}`)}>Manage Campaign</Button>
               </CardContent>
             </Card>
           ))

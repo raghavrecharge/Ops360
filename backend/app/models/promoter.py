@@ -8,3 +8,4 @@ class Promoter(Base, BaseModel):
     phone = Column(String(20))
     email = Column(String(255))
     specialty = Column(String(255))
+    language = Column(String(100))

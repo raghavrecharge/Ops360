@@ -47,3 +47,27 @@ async def reject_expense(
     """Reject an expense"""
     service = ExpenseService()
     return await service.reject_expense(db, expense_id)
+
+
+@router.get("/{expense_id}", response_model=ExpenseResponse)
+async def get_expense(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get expense by ID"""
+    service = ExpenseService()
+    return await service.get_expense(db, expense_id)
+
+
+@router.put("/{expense_id}", response_model=ExpenseResponse)
+async def update_expense(
+    expense_id: int,
+    expense_data: ExpenseCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an existing expense"""
+    service = ExpenseService()
+    data = expense_data.model_dump()
+    return await service.update_expense(db, expense_id, data)
