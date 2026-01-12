@@ -115,10 +115,10 @@ const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
         {/* Legend */}
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 px-2">
            {[
-             { label: 'Exalted (>32)', color: 'bg-emerald-500' },
+             { label: 'Exalted (32+)', color: 'bg-emerald-500' },
              { label: 'Strong (28-31)', color: 'bg-emerald-400' },
              { label: 'Average (25-27)', color: 'bg-amber-400' },
-             { label: 'Critical (<25)', color: 'bg-rose-500' }
+             { label: 'Critical (below 25)', color: 'bg-rose-500' }
            ].map((item, idx) => (
              <div key={idx} className="flex items-center gap-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
