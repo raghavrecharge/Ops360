@@ -174,23 +174,28 @@ def main():
         return 1
 
     # Test 6: Chart Bundle
-    if not tester.test_get_chart_bundle()[0]:
+    chart_success, _ = tester.test_get_chart_bundle()
+    if not chart_success:
         print("⚠️  Chart bundle test failed")
 
     # Test 7: Dashas
-    if not tester.test_get_dashas()[0]:
+    dasha_success, _ = tester.test_get_dashas()
+    if not dasha_success:
         print("⚠️  Dashas test failed")
 
     # Test 8: Yogas
-    if not tester.test_get_yogas()[0]:
+    yoga_success, _ = tester.test_get_yogas()
+    if not yoga_success:
         print("⚠️  Yogas test failed")
 
     # Test 9: Chat
-    if not tester.test_chat_message()[0]:
+    chat_success, _ = tester.test_chat_message()
+    if not chat_success:
         print("⚠️  Chat test failed")
 
     # Test 10: Knowledge Search
-    if not tester.test_knowledge_search()[0]:
+    kb_success, _ = tester.test_knowledge_search()
+    if not kb_success:
         print("⚠️  Knowledge search test failed")
 
     # Print results
