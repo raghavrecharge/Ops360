@@ -210,19 +210,26 @@ export const astrologyApi = {
 
   // Knowledge Base
   async searchKnowledge(query: string): Promise<KBChunk[]> {
-    const response = await api.get(`/api/kb/search?q=${encodeURIComponent(query)}&limit=10`);
-    const data = response.data;
+    try {
+      // Try POST endpoint first
+      const response = await api.post(`/api/kb/search?query=${encodeURIComponent(query)}&top_k=10`);
+      const data = response.data;
 
-    return (data.chunks || data.results || []).map((c: any) => ({
-      id: c.id || c.chunk_id,
-      category: c.category || 'Concepts',
-      title: c.title || c.heading,
-      summary: c.summary || c.text?.substring(0, 100),
-      content: c.content || c.text,
-      difficulty: c.difficulty || 'Beginner',
-      tags: c.tags || [],
-      readTime: c.read_time || '3 min',
-    }));
+      return (data.results || []).map((c: any) => ({
+        id: c.chunk_id?.toString() || c.id,
+        category: 'General',
+        title: c.section || c.source || 'Knowledge',
+        summary: c.content?.substring(0, 100),
+        content: c.content,
+        difficulty: 'Beginner',
+        tags: [],
+        readTime: '3 min',
+      }));
+    } catch (error) {
+      // Return empty array if KB not available
+      console.warn('Knowledge base not available');
+      return [];
+    }
   },
 
   // Chat
