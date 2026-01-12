@@ -1,0 +1,328 @@
+.dashboard {
+  padding: 20px;
+  min-height: calc(100vh - 200px);
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 215, 0, 0.3);
+  border-top-color: #FFD700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.dashboard-header h2 {
+  color: #FFD700;
+  margin: 0;
+  font-size: 24px;
+}
+
+.dashboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.layout-selector {
+  position: relative;
+}
+
+.btn-layout-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-layout-select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.layout-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  min-width: 180px;
+  z-index: 100;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.layout-menu-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.layout-menu-item:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.layout-menu-item.active {
+  background: rgba(255, 215, 0, 0.2);
+  color: #FFD700;
+}
+
+.default-badge {
+  color: #FFD700;
+  font-size: 12px;
+}
+
+.btn-add-widget, .btn-reset, .btn-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-add-widget {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.btn-reset {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid #ff9800;
+}
+
+.btn-save {
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.btn-add-widget:hover, .btn-reset:hover, .btn-save:hover {
+  transform: scale(1.02);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.layout-name-input {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  width: 140px;
+}
+
+.layout-name-input:focus {
+  outline: none;
+  border-color: #FFD700;
+}
+
+.add-widget-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.add-widget-panel h4 {
+  color: #FFD700;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+}
+
+.widget-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.widget-option {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.widget-option:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.widget-option-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.widget-option-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 3px;
+}
+
+.no-widgets {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}
+
+.dashboard-grid-container {
+  overflow-x: auto;
+}
+
+.dashboard-grid {
+  min-height: 600px;
+}
+
+.widget-container {
+  background: rgba(26, 26, 46, 0.95);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 215, 0, 0.1);
+  cursor: grab;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.widget-header:active {
+  cursor: grabbing;
+}
+
+.widget-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.btn-remove-widget {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.btn-remove-widget:hover {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.2);
+}
+
+.widget-content {
+  flex: 1;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.widget-error, .widget-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+/* React Grid Layout overrides */
+.react-grid-item.react-grid-placeholder {
+  background: rgba(255, 215, 0, 0.2);
+  border: 2px dashed #FFD700;
+  border-radius: 10px;
+}
+
+.react-grid-item > .react-resizable-handle {
+  background: none;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid rgba(255, 215, 0, 0.5);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+@media (max-width: 1200px) {
+  .dashboard-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .save-controls {
+    width: 100%;
+  }
+  
+  .layout-name-input {
+    flex: 1;
+  }
+}

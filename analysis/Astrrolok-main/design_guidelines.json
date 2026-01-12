@@ -1,0 +1,109 @@
+{
+  "identity": {
+    "persona": "E1",
+    "tone": "Mystical, Precision, Premium, Deep",
+    "theme_preference": "dark"
+  },
+  "typography": {
+    "primary_font": "Manrope",
+    "secondary_font": "Playfair Display",
+    "hindi_font": "Hind",
+    "hindi_heading_font": "Rozha One",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Hind:wght@300;400;500;600;700&family=Rozha+One&display=swap",
+    "usage": {
+      "headings": "font-serif tracking-tight",
+      "body": "font-sans tracking-normal",
+      "data": "font-sans tabular-nums",
+      "hindi_headings": "font-['Rozha_One']",
+      "hindi_body": "font-['Hind']"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "240 10% 3.9%",
+      "foreground": "0 0% 98%",
+      "card": "240 10% 3.9%",
+      "card-foreground": "0 0% 98%",
+      "popover": "240 10% 3.9%",
+      "popover-foreground": "0 0% 98%",
+      "primary": "45 93% 47%",
+      "primary-foreground": "240 5.9% 10%",
+      "secondary": "267 75% 31%",
+      "secondary-foreground": "0 0% 98%",
+      "muted": "240 3.7% 15.9%",
+      "muted-foreground": "240 5% 64.9%",
+      "accent": "240 3.7% 15.9%",
+      "accent-foreground": "0 0% 98%",
+      "destructive": "0 62.8% 30.6%",
+      "destructive-foreground": "0 0% 98%",
+      "border": "240 3.7% 15.9%",
+      "input": "240 3.7% 15.9%",
+      "ring": "45 93% 47%",
+      "chart-1": "45 93% 47%",
+      "chart-2": "142 76% 36%",
+      "chart-3": "267 75% 31%",
+      "chart-4": "340 75% 55%",
+      "chart-5": "280 65% 60%"
+    },
+    "semantic": {
+      "traffic_green": "#10B981",
+      "traffic_amber": "#F59E0B",
+      "traffic_red": "#EF4444",
+      "gold_gradient": "linear-gradient(135deg, #FCD34D 0%, #D97706 100%)",
+      "nebula_gradient": "linear-gradient(to right, #4c1d95, #5b21b6, #7c3aed)"
+    }
+  },
+  "layout": {
+    "spacing": "Generous (2x standard)",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_strategy": "Bento Grid (Asymmetric)",
+    "border_radius": "0.75rem"
+  },
+  "components": {
+    "glassmorphism": {
+      "base": "bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl",
+      "hover": "hover:bg-black/50 hover:border-white/20 transition-all duration-300"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(212,175,55,0.3)]",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+    },
+    "cards": {
+      "default": "bg-card text-card-foreground border-border shadow-sm",
+      "interactive": "hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+    }
+  },
+  "assets": {
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1754851539824-5a87c5c7cb86?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxkZWVwJTIwc3BhY2UlMjBuZWJ1bGElMjBiYWNrZ3JvdW5kJTIwZGFyayUyMHB1cnBsZSUyMGJsdWV8ZW58MHx8fHwxNzY3NjA1MTcwfDA&ixlib=rb-4.1.0&q=85",
+        "category": "hero_bg",
+        "description": "Vibrant purple nebula with bright stars"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1633785976570-d14fb8b632c7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwyfHxkZWVwJTIwc3BhY2UlMjBuZWJ1bGElMjBiYWNrZ3JvdW5kJTIwZGFyayUyMHB1cnBsZSUyMGJsdWV8ZW58MHx8fHwxNzY3NjA1MTcwfDA&ixlib=rb-4.1.0&q=85",
+        "category": "section_bg",
+        "description": "Night sky filled with stars and clouds"
+      }
+    ],
+    "textures": [
+      {
+        "url": "https://images.unsplash.com/photo-1709237104643-3e11922ce515?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxnb2xkZW4lMjBzYWNyZWQlMjBnZW9tZXRyeSUyMG1hbmRhbGElMjBibGFjayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzY3NjA1MTcyfDA&ixlib=rb-4.1.0&q=85",
+        "category": "ornament",
+        "description": "Ornate gilded ceiling pattern"
+      }
+    ]
+  },
+  "universal_guidelines": [
+    "Use 'Manrope' for all UI text and 'Playfair Display' for Headings.",
+    "Default to Dark Mode. Use deep void blacks (#05050A) instead of pure black.",
+    "Use Gold (#D4AF37) sparingly for high-value actions or divine elements.",
+    "Implement 'Cosmic Traffic Light' logic: Green (Go), Amber (Caution), Red (Stop).",
+    "Use Glassmorphism for all floating panels (Modals, Sticky Nav, Toasts).",
+    "Ensure all interactive elements have `data-testid` attributes.",
+    "Do not use gradients for text unless it is a very large hero heading.",
+    "Charts must be SVG-based and responsive.",
+    "Bilingual support is mandatory: Ensure fonts support Devanagari script."
+  ],
+  "instructions_to_main_agent": "You are building AstroOS. Start by setting up the Tailwind config with the provided colors and fonts. Then build the Layout shell with a sidebar and glassmorphic header. Prioritize the 'Dashboard' view with the Bento grid layout. Use the provided image URLs for backgrounds. Ensure the 'Cosmic Traffic Light' component is prominent."
+}

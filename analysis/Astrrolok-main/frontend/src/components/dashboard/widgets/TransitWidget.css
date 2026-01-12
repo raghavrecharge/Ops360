@@ -1,0 +1,100 @@
+.transit-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 5px;
+}
+
+.transit-widget-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-top-color: #FFD700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 8px;
+}
+
+.sade-sati-indicator {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.sade-sati-indicator.active {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.sade-sati-indicator.inactive {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.indicator-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.indicator-status {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.major-transits {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.transit-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.transit-planet {
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.transit-sign {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.transit-house {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.retrogrades {
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.retro-label {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.retro-planets {
+  color: rgba(255, 255, 255, 0.7);
+}

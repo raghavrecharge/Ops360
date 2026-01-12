@@ -1,0 +1,380 @@
+/* ML Predictions Styles */
+.ml-predictions {
+  padding: 20px;
+}
+
+.ml-predictions h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #FFD700;
+  margin: 0 0 10px 0;
+}
+
+.ml-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 25px 0;
+}
+
+/* Stats */
+.ml-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.ml-stats .stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.ml-stats .stat-value {
+  display: block;
+  font-size: 32px;
+  font-weight: bold;
+  color: #FFD700;
+}
+
+.ml-stats .stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Event Labels */
+.event-labels {
+  margin-bottom: 30px;
+}
+
+.event-labels h3 {
+  color: #FFD700;
+  margin: 0 0 15px 0;
+}
+
+.labels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.label-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label-name {
+  font-weight: 600;
+  color: #FFD700;
+  text-transform: capitalize;
+}
+
+.label-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.label-count {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 5px;
+}
+
+/* Actions */
+.ml-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.btn-predict, .btn-add-example, .btn-train {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-predict {
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+  color: #1a1a2e;
+}
+
+.btn-add-example {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.btn-train {
+  background: rgba(156, 39, 176, 0.2);
+  color: #ce93d8;
+  border: 1px solid #9c27b0;
+}
+
+.btn-predict:hover:not(:disabled),
+.btn-add-example:hover:not(:disabled),
+.btn-train:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.btn-predict:disabled,
+.btn-add-example:disabled,
+.btn-train:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Training Form */
+.training-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.training-form {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 400px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.training-form h3 {
+  color: #FFD700;
+  margin: 0 0 10px 0;
+}
+
+.training-form > p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  margin: 0 0 25px 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #FFD700;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+  border: none;
+  border-radius: 6px;
+  color: #1a1a2e;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+}
+
+/* Predictions Results */
+.predictions-results {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.predictions-results h3 {
+  color: #FFD700;
+  margin: 0 0 20px 0;
+}
+
+.probabilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.probability-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.prob-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.prob-event {
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.prob-value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.prob-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.prob-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.prob-status {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+/* Top Factors */
+.top-factors {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.top-factors h4 {
+  color: #FFD700;
+  margin: 0 0 15px 0;
+}
+
+.factor-card {
+  display: flex;
+  gap: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 3px solid #ffc107;
+}
+
+.factor-icon {
+  color: #ffc107;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.factor-content strong {
+  color: #ffc107;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.factor-content p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  margin: 0 0 6px 0;
+}
+
+.factor-impact {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Error State */
+.prediction-error {
+  text-align: center;
+  padding: 40px;
+  color: #f44336;
+}
+
+.prediction-error p {
+  margin: 15px 0;
+}
+
+.error-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ml-actions {
+    flex-direction: column;
+  }
+  
+  .ml-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,121 @@
+.align27-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 5px;
+}
+
+.align27-widget-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.traffic-light-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.traffic-light-mini.traffic-green {
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+.traffic-light-mini.traffic-amber {
+  border: 2px solid #ffc107;
+  box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+}
+
+.traffic-light-mini.traffic-red {
+  border: 2px solid #f44336;
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.3);
+}
+
+.score-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #FFD700;
+}
+
+.score-color {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.moments-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.moment-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.moment-mini.moment-golden {
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.moment-mini.moment-productive {
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.moment-mini.moment-silence {
+  background: rgba(156, 39, 176, 0.15);
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.moment-icon.golden { color: #FFD700; }
+.moment-icon.productive { color: #ff9800; }
+.moment-icon.silence { color: #9c27b0; }
+
+.moment-time {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mini-timeline {
+  position: relative;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.timeline-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.timeline-segment.golden { background: #FFD700; }
+.timeline-segment.productive { background: #ff9800; }
+.timeline-segment.silence { background: #9c27b0; }
+
+.align27-widget.compact .traffic-light-mini {
+  padding: 8px;
+}
+
+.align27-widget.compact .score-value {
+  font-size: 22px;
+}
