@@ -132,7 +132,7 @@ const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
          <InformationCircleIcon className="w-5 h-5 text-[#f97316] flex-shrink-0" />
          <p className="text-[10px] font-bold text-[#8c7e74] leading-relaxed">
             Sarvashtakavarga (SAV) points represent the collective strength of the 7 main planets in a specific house. 
-            Houses with >28 points act as focus areas for growth and success during transits.
+            Houses with {'>'} 28 points act as focus areas for growth and success during transits.
          </p>
       </div>
     </div>
