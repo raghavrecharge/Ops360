@@ -175,16 +175,53 @@ export const astrologyApi = {
     const response = await api.get(`/api/remedies/${profileId}`);
     const data = response.data;
 
-    return (data.remedies || data || []).map((r: any) => ({
-      type: r.type || 'Mantra',
-      planet: r.planet as Planet,
-      title: r.title || r.name,
-      description: r.description,
-      benefit: r.benefit || r.effect,
-      mantraText: r.mantra,
-      day: r.day,
-      color: r.color,
-    }));
+    // Transform remedies_by_planet format to array of Remedy objects
+    const remedies: Remedy[] = [];
+    const remediesByPlanet = data.remedies_by_planet || {};
+    
+    for (const [planet, remedyTypes] of Object.entries(remediesByPlanet)) {
+      const typedRemedies = remedyTypes as Record<string, any>;
+      
+      // Extract gemstone remedy
+      if (typedRemedies.gemstone) {
+        remedies.push({
+          type: 'Gemstone',
+          planet: planet as Planet,
+          title: `${typedRemedies.gemstone.primary_gem} for ${planet}`,
+          description: `Wear ${typedRemedies.gemstone.primary_gem} set in ${typedRemedies.gemstone.metal} on ${typedRemedies.gemstone.finger} finger`,
+          benefit: typedRemedies.gemstone.benefit || `Strengthens ${planet}`,
+          day: typedRemedies.gemstone.day_to_wear,
+          color: getColorForPlanet(planet),
+        });
+      }
+
+      // Extract mantra remedy
+      if (typedRemedies.mantra) {
+        remedies.push({
+          type: 'Mantra',
+          planet: planet as Planet,
+          title: `${planet} Mantra`,
+          description: `Chant the beej mantra for ${planet}`,
+          benefit: `Minimum ${typedRemedies.mantra.minimum_count} repetitions for full effect`,
+          mantraText: typedRemedies.mantra.beej_mantra,
+          day: typedRemedies.mantra.best_day,
+        });
+      }
+
+      // Extract charity remedy
+      if (typedRemedies.charity) {
+        remedies.push({
+          type: 'Charity',
+          planet: planet as Planet,
+          title: `${planet} Charity`,
+          description: `Donate: ${typedRemedies.charity.items_to_donate?.join(', ')}`,
+          benefit: `Give to ${typedRemedies.charity.beneficiary}`,
+          day: typedRemedies.charity.best_day,
+        });
+      }
+    }
+
+    return remedies;
   },
 
   // Yogas
