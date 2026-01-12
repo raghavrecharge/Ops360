@@ -102,7 +102,7 @@ class AstroOSAPITester:
         if success and isinstance(response, list) and len(response) > 0:
             self.profile_id = response[0]['id']
             print(f"   Found profile ID: {self.profile_id}")
-        return success
+        return success, response
 
     def test_get_chart_bundle(self):
         """Test chart bundle endpoint"""
