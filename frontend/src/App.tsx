@@ -6,61 +6,64 @@ import {
   SparklesIcon, 
   UserCircleIcon, 
   Squares2X2Icon, 
-  BellIcon, 
   ClockIcon, 
   TableCellsIcon, 
   ScaleIcon, 
   HeartIcon, 
   BookOpenIcon, 
-  CpuChipIcon, 
   ArrowDownTrayIcon, 
   DocumentArrowDownIcon, 
-  CheckBadgeIcon, 
-  BeakerIcon, 
   InformationCircleIcon,
-  TrophyIcon,
-  CurrencyDollarIcon,
-  AcademicCapIcon,
-  ShieldCheckIcon,
-  FireIcon,
-  HandThumbUpIcon,
-  StarIcon,
-  ExclamationTriangleIcon,
-  LightBulbIcon,
-  MagnifyingGlassPlusIcon,
-  MapPinIcon,
-  KeyIcon,
-  SunIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  LifebuoyIcon,
-  BoltIcon,
-  AdjustmentsHorizontalIcon,
+  ArrowRightOnRectangleIcon,
   ChevronDownIcon,
-  CommandLineIcon
+  CommandLineIcon,
+  BoltIcon,
+  LifebuoyIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-import { BirthData, DivisionalChart, DashaNode, UserProfile, YogaMatch, ChatMessage, Sign, Planet, ChartPoint, TransitContext, PlannerData, ShadbalaData, CompatibilityData, Remedy, KBChunk } from './types';
-import { astrologyService, VarshaphalaData, AshtakavargaData } from './services/astrologyService';
-import { geminiService } from './services/geminiService';
-import NorthIndianChart from './components/NorthIndianChart.tsx';
-import DashaTree from './components/DashaTree.tsx';
-import Align27Dashboard from './components/Align27Dashboard.tsx';
-import TodayView from './components/TodayView.tsx';
-import PlannerView from './components/PlannerView.tsx';
-import StrengthView from './components/StrengthView.tsx';
-import CompatibilityView from './components/CompatibilityView.tsx';
-import RemediesView from './components/RemediesView.tsx';
-import KnowledgeView from './components/KnowledgeView.tsx';
-import AshtakavargaChart from './components/AshtakavargaChart.tsx';
-import ChatView from './components/ChatView.tsx';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { astrologyApi } from './services/astrologyApi';
+import { DivisionalChart, DashaNode, YogaMatch, ChatMessage, Sign, Planet, ChartPoint, TransitContext, PlannerData, ShadbalaData, CompatibilityData, Remedy, KBChunk } from './types';
 import { SIGN_NAMES, SIGN_SYMBOLS } from './constants';
 
-const App: React.FC = () => {
+// Components
+import AuthView from './components/AuthView';
+import ProfileSelector from './components/ProfileSelector';
+import NorthIndianChart from './components/NorthIndianChart';
+import DashaTree from './components/DashaTree';
+import Align27Dashboard from './components/Align27Dashboard';
+import TodayView from './components/TodayView';
+import PlannerView from './components/PlannerView';
+import StrengthView from './components/StrengthView';
+import CompatibilityView from './components/CompatibilityView';
+import RemediesView from './components/RemediesView';
+import KnowledgeView from './components/KnowledgeView';
+import AshtakavargaChart from './components/AshtakavargaChart';
+import ChatView from './components/ChatView';
+
+// Ashtakavarga Data Type
+export interface AshtakavargaData {
+  bav: Record<string, number[]>;
+  sav: number[];
+  totalPoints: number;
+  planetTotals: Record<string, number>;
+  summary: {
+    strongestHouse: number;
+    weakestHouse: number;
+    averagePoints: number;
+    houseInterpretations: string[];
+    houseSignifications: string[];
+  };
+  isValid: boolean;
+}
+
+// Main App Content (authenticated)
+function AppContent() {
+  const { user, selectedProfile, logout, profiles } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [chart, setChart] = useState<DivisionalChart | null>(null);
   const [dashas, setDashas] = useState<DashaNode[]>([]);
   const [yogas, setYogas] = useState<YogaMatch[]>([]);
@@ -75,15 +78,11 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedVarga, setSelectedVarga] = useState(1);
+  const [showProfileSelector, setShowProfileSelector] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   
   const chartRef = useRef<HTMLDivElement>(null);
-  const avRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
-  const d1ChartOnlyRef = useRef<HTMLDivElement>(null);
-  const varshaRef = useRef<HTMLDivElement>(null);
-
-  const [varshaYear, setVarshaYear] = useState<number>(new Date().getFullYear());
-  const [varshaData, setVarshaData] = useState<VarshaphalaData | null>(null);
 
   const VARGA_INFO: Record<number, { name: string; significance: string }> = {
     1: { name: 'Rasi', significance: 'Overall Life, Body, Personality' },
@@ -102,36 +101,101 @@ const App: React.FC = () => {
     60: { name: 'Shastiamsa', significance: 'Past Life Karma, Soul History' }
   };
 
-  const activeChart = useMemo(() => {
-    if (!chart) return null;
-    if (selectedVarga === 1) return chart;
-    return astrologyService.calculateVarga(chart, selectedVarga);
-  }, [chart, selectedVarga]);
+  // Load data when profile changes
+  useEffect(() => {
+    if (selectedProfile?.id) {
+      loadProfileData(selectedProfile.id);
+    }
+  }, [selectedProfile?.id]);
 
-  const currentDasha = useMemo(() => {
-    const now = new Date();
-    return dashas.find(d => new Date(d.start) <= now && new Date(d.end) >= now);
-  }, [dashas]);
+  const loadProfileData = async (profileId: number) => {
+    setIsLoading(true);
+    setApiError(null);
 
-  const astroContext = useMemo(() => {
-    if (!chart) return null;
-    const lagna = chart.points.find(p => p.planet === Planet.Lagna);
-    return {
-      lagna: lagna ? `${SIGN_NAMES[lagna.sign]} (H1)` : 'Unknown',
-      planets: chart.points.map(p => ({
-        p: p.planet,
-        s: SIGN_NAMES[p.sign],
-        h: p.house,
-        d: p.dignity
-      })),
-      activeDasha: currentDasha?.planet || 'Unknown',
-      todayTransits: todayData?.panchang,
-      yogas: yogas.slice(0, 3)
-    };
-  }, [chart, currentDasha, todayData, yogas]);
+    try {
+      // Load chart data
+      const chartBundle = await astrologyApi.getChartBundle(profileId);
+      setChart(chartBundle.d1);
+
+      // Load dashas
+      const dashaData = await astrologyApi.getDashas(profileId);
+      setDashas(dashaData);
+
+      // Load yogas
+      const yogaData = await astrologyApi.getYogas(profileId);
+      setYogas(yogaData);
+
+      // Load today data
+      try {
+        const today = await astrologyApi.getTodayData(profileId);
+        setTodayData(today);
+      } catch (e) {
+        console.warn('Today data not available');
+      }
+
+      // Load planner data
+      try {
+        const planner = await astrologyApi.getPlannerData(profileId);
+        setPlannerData(planner);
+      } catch (e) {
+        console.warn('Planner data not available');
+      }
+
+      // Load strength data
+      try {
+        const strength = await astrologyApi.getShadbala(profileId);
+        setShadbalaData(strength);
+      } catch (e) {
+        console.warn('Strength data not available');
+      }
+
+      // Load remedies
+      try {
+        const remedies = await astrologyApi.getRemedies(profileId);
+        setRemediesData(remedies);
+      } catch (e) {
+        console.warn('Remedies data not available');
+      }
+
+      // Load ashtakavarga
+      try {
+        const av = await astrologyApi.getAshtakavarga(profileId);
+        setAvData({
+          bav: av.bav || {},
+          sav: av.sav || [],
+          totalPoints: 337,
+          planetTotals: {},
+          summary: {
+            strongestHouse: 1,
+            weakestHouse: 6,
+            averagePoints: 28,
+            houseInterpretations: [],
+            houseSignifications: [],
+          },
+          isValid: true,
+        });
+      } catch (e) {
+        console.warn('Ashtakavarga data not available');
+      }
+
+      // Load knowledge base
+      try {
+        const kb = await astrologyApi.searchKnowledge('vedic astrology');
+        setKbData(kb);
+      } catch (e) {
+        console.warn('Knowledge base not available');
+      }
+
+    } catch (error: any) {
+      console.error('Failed to load profile data:', error);
+      setApiError(error.message || 'Failed to load data from server');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendMessage = async (content: string) => {
-    if (!astroContext) return;
+    if (!selectedProfile) return;
     
     const userMsg: ChatMessage = { role: 'user', content };
     const newHistory = [...chatHistory, userMsg];
@@ -139,11 +203,11 @@ const App: React.FC = () => {
     setIsChatLoading(true);
 
     try {
-      const response = await geminiService.chat(newHistory, astroContext);
+      const response = await astrologyApi.sendChatMessage(selectedProfile.id, content, newHistory);
       setChatHistory([...newHistory, response]);
     } catch (error) {
       console.error("Chat error:", error);
-      setChatHistory([...newHistory, { role: 'assistant', content: "Sorry, I lost alignment with the stars. Please rephrase your question." }]);
+      setChatHistory([...newHistory, { role: 'assistant', content: "Sorry, I couldn't process your request. Please try again." }]);
     } finally {
       setIsChatLoading(false);
     }
@@ -156,75 +220,6 @@ const App: React.FC = () => {
     return `${d}° ${m}' ${s}"`;
   };
 
-  const formatNakDegree = (deg: number) => {
-    const d = Math.floor(deg);
-    const m = Math.floor((deg - d) * 60);
-    const s = Math.floor((((deg - d) * 60) - m) * 60);
-    return `${d}° ${m}' ${s}"`;
-  };
-
-  const isGandanta = (p: ChartPoint) => {
-    const isWaterEdge = [4, 8, 12].includes(p.sign) && p.degree > 29;
-    const isFireStart = [1, 5, 9].includes(p.sign) && p.degree < 1;
-    return isWaterEdge || isFireStart;
-  };
-
-  const getVargottamaStatus = (p: ChartPoint) => {
-    if (!chart || selectedVarga === 1) return false;
-    const natalPoint = chart.points.find(np => np.planet === p.planet);
-    return natalPoint?.sign === p.sign;
-  };
-
-  const setupDemo = () => {
-    const demoBirth: BirthData = {
-      name: "Modern Seeker",
-      dob: "1990-05-15",
-      tob: "12:30",
-      lat: 28.6139,
-      lng: 77.2090,
-      tz: "Asia/Kolkata"
-    };
-    const partnerBirth: BirthData = {
-      name: "Cosmic Partner",
-      dob: "1992-08-20",
-      tob: "08:15",
-      lat: 19.0760,
-      lng: 72.8777,
-      tz: "Asia/Kolkata"
-    };
-    const demoProfile: UserProfile = {
-      id: "demo-user",
-      birthData: demoBirth,
-      preferences: { ayanamsa: 'Lahiri', chartStyle: 'North' }
-    };
-    setProfile(demoProfile);
-    const d1 = astrologyService.calculateNatalChart(demoBirth);
-    setChart(d1);
-    const vDashas = astrologyService.getVimshottariDashas(demoBirth, 5);
-    setDashas(vDashas);
-    setVarshaData(astrologyService.calculateVarshaphala(demoBirth, new Date().getFullYear()));
-    setAvData(astrologyService.calculateAshtakavarga(d1));
-    setTodayData(astrologyService.getTodayData(demoBirth));
-    setPlannerData(astrologyService.getPlannerData(demoBirth));
-    const sbData = astrologyService.calculateShadbala(demoBirth);
-    setShadbalaData(sbData);
-    setCompatibilityData(astrologyService.calculateCompatibility(demoBirth, partnerBirth));
-    setRemediesData(astrologyService.generateRemedies(sbData, d1));
-    setKbData(astrologyService.getKnowledgeBase());
-
-    setIsLoading(true);
-    const deterministicYogas = astrologyService.detectYogas(d1);
-    geminiService.findYogas(d1).then(aiYogas => {
-      const existingNames = new Set(deterministicYogas.map(y => y.name));
-      const filteredAi = aiYogas.filter(y => !existingNames.has(y.name));
-      setYogas([...deterministicYogas, ...filteredAi]);
-    }).finally(() => setIsLoading(false));
-  };
-
-  useEffect(() => {
-    setupDemo();
-  }, []);
-
   const exportToPDF = async (ref: React.RefObject<HTMLDivElement | null>, title: string, filename: string) => {
     if (!ref.current) return;
     setIsLoading(true);
@@ -236,18 +231,11 @@ const App: React.FC = () => {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        onclone: (clonedDoc) => {
-          const ignoreElements = clonedDoc.querySelectorAll('[data-pdf-ignore]');
-          ignoreElements.forEach(el => {
-            if (el instanceof HTMLElement) el.style.display = 'none';
-          });
-        }
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
       const imgWidth = pdfWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -285,7 +273,6 @@ const App: React.FC = () => {
     ]},
     { section: 'ANALYSIS', items: [
       { id: 'strength', label: 'Strength', icon: ScaleIcon },
-      { id: 'varshaphala', label: 'Varshaphala', icon: SparklesIcon },
       { id: 'compatibility', label: 'Compatibility', icon: HeartIcon },
       { id: 'remedies', label: 'Remedies', icon: SparklesIcon }
     ]},
@@ -295,15 +282,44 @@ const App: React.FC = () => {
     ]}
   ];
 
+  // Profile selector modal
+  if (showProfileSelector) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <ProfileSelector onClose={() => setShowProfileSelector(false)} />
+      </div>
+    );
+  }
+
+  // No profile selected
+  if (!selectedProfile) {
+    return (
+      <div className="min-h-screen bg-[#fcf8f5] flex items-center justify-center">
+        <div className="text-center">
+          <SparklesIcon className="w-16 h-16 text-[#f97316] mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-[#2d2621] mb-4">Welcome, {user?.full_name || user?.email}!</h2>
+          <p className="text-[#8c7e74] mb-6">Please create or select a profile to continue.</p>
+          <button
+            onClick={() => setShowProfileSelector(true)}
+            className="px-8 py-4 bg-[#f97316] text-white font-bold rounded-xl shadow-lg hover:bg-orange-600 transition-all"
+          >
+            Select Profile
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-[#fcf8f5] text-[#2d2621]">
       {(isLoading) && (
         <div className="fixed inset-0 z-[9999] bg-[#2d2621]/40 backdrop-blur-sm flex flex-col items-center justify-center text-white">
           <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4" />
-          <p className="text-lg font-bold">Processing Cosmic Data...</p>
+          <p className="text-lg font-bold">Loading Cosmic Data...</p>
         </div>
       )}
 
+      {/* Sidebar */}
       <aside className="w-[280px] bg-white border-r border-[#f1ebe6] flex flex-col overflow-hidden">
         <div className="p-7 flex items-center gap-3">
           <div className="w-10 h-10 bg-[#f97316] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
@@ -320,9 +336,10 @@ const App: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
+                  data-testid={`nav-${item.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
                     activeTab === item.id 
-                      ? 'sidebar-active text-white' 
+                      ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/20' 
                       : 'text-[#2d2621] hover:bg-[#fff7ed] hover:text-[#f97316]'
                   }`}
                 >
@@ -333,25 +350,63 @@ const App: React.FC = () => {
             </div>
           ))}
         </nav>
+
+        {/* User Section */}
+        <div className="p-4 border-t border-[#f1ebe6]">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#8c7e74] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+          >
+            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            <span className="text-sm font-semibold">Sign Out</span>
+          </button>
+        </div>
       </aside>
 
+      {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         <header className="h-20 bg-white border-b border-[#f1ebe6] px-8 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[#2d2621] capitalize">{activeTab.replace('-', ' ')}</h2>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-[#fcf8f5] border border-[#f1ebe6] rounded-xl px-4 py-2">
+            <button
+              onClick={() => setShowProfileSelector(true)}
+              className="flex items-center gap-3 bg-[#fcf8f5] border border-[#f1ebe6] rounded-xl px-4 py-2 hover:border-[#f97316] transition-all"
+              data-testid="profile-selector-btn"
+            >
               <UserCircleIcon className="w-5 h-5 text-[#f97316]" />
-              <p className="text-[11px] font-bold text-[#2d2621]">Demo Profile</p>
-            </div>
+              <div className="text-left">
+                <p className="text-[11px] font-bold text-[#2d2621]">{selectedProfile.name}</p>
+                <p className="text-[9px] text-[#8c7e74]">{selectedProfile.birth_place}</p>
+              </div>
+            </button>
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          {apiError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600">
+              <p className="font-bold">Error loading data</p>
+              <p className="text-sm">{apiError}</p>
+              <button
+                onClick={() => selectedProfile && loadProfileData(selectedProfile.id)}
+                className="mt-2 text-sm underline hover:no-underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           <div className="max-w-7xl mx-auto space-y-8">
             {activeTab === 'today' && todayData && <TodayView data={todayData} />}
             {activeTab === 'planner' && plannerData && <PlannerView data={plannerData} />}
             {activeTab === 'strength' && shadbalaData.length > 0 && <StrengthView data={shadbalaData} />}
-            {activeTab === 'compatibility' && compatibilityData && <CompatibilityView data={compatibilityData} />}
+            {activeTab === 'compatibility' && (
+              <div className="text-center py-12">
+                <HeartIcon className="w-16 h-16 text-[#f97316] mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-[#2d2621] mb-2">Compatibility Analysis</h3>
+                <p className="text-[#8c7e74]">Select two profiles to compare compatibility.</p>
+              </div>
+            )}
             {activeTab === 'remedies' && remediesData.length > 0 && <RemediesView data={remediesData} />}
             {activeTab === 'knowledge' && kbData.length > 0 && <KnowledgeView data={kbData} />}
             {activeTab === 'chat' && (
@@ -370,8 +425,9 @@ const App: React.FC = () => {
                       <p className="text-xs font-bold text-[#8c7e74] uppercase tracking-widest">D1 Rasi Alignment</p>
                    </div>
                    <button 
-                     onClick={() => exportToPDF(dashboardRef, "Natal Chart (D1) Analysis", `${profile?.birthData.name}_Natal_Report.pdf`)}
+                     onClick={() => exportToPDF(dashboardRef, "Natal Chart (D1) Analysis", `${selectedProfile?.name}_Natal_Report.pdf`)}
                      className="px-6 py-3 bg-[#f97316] text-white text-xs font-black rounded-2xl shadow-xl shadow-orange-500/20 hover:bg-[#fbbf24] transition-all flex items-center gap-2 uppercase tracking-widest"
+                     data-testid="export-pdf-btn"
                    >
                      <DocumentArrowDownIcon className="w-5 h-5" />
                      Full Report
@@ -384,13 +440,13 @@ const App: React.FC = () => {
                        {chart && <NorthIndianChart chart={chart} title="Natal Rasi Chart (D1)" />}
                      </div>
                      <div className="space-y-6">
-                        <div className="card-modern p-6 bg-[#fffcf9]">
+                        <div className="p-6 bg-white rounded-3xl border border-[#f1ebe6]">
                            <h4 className="text-sm font-black text-[#2d2621] uppercase mb-6 border-b pb-3 flex items-center gap-2">
                              <ScaleIcon className="w-5 h-5 text-orange-400" /> Natal Positions
                            </h4>
                            <div className="space-y-3">
                               {chart?.points.map(p => (
-                                <div key={p.planet} className="flex justify-between items-center p-3 bg-white border border-[#f1ebe6] rounded-xl shadow-sm hover:border-[#f97316]/30 transition-all group">
+                                <div key={p.planet} className="flex justify-between items-center p-3 bg-[#fcf8f5] border border-[#f1ebe6] rounded-xl shadow-sm hover:border-[#f97316]/30 transition-all group">
                                    <div className="flex flex-col">
                                       <div className="flex items-center gap-2">
                                         <span className="text-xs font-black text-[#2d2621]">{p.planet}</span>
@@ -399,7 +455,7 @@ const App: React.FC = () => {
                                           p.dignity === 'Debilitated' ? 'bg-rose-50 border-rose-100 text-rose-600' :
                                           'bg-slate-50 border-slate-200 text-slate-400'
                                         }`}>
-                                          {p.dignity?.substring(0, 3)}
+                                          {p.dignity?.substring(0, 3) || 'NEU'}
                                         </span>
                                       </div>
                                    </div>
@@ -420,28 +476,24 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {activeTab === 'charts' && chart && activeChart && (
+            {activeTab === 'charts' && chart && (
               <div className="space-y-8 animate-in fade-in duration-500">
-                {/* Varga Selector Module */}
                 <div className="bg-white p-8 rounded-[32px] border border-[#f1ebe6] shadow-sm space-y-8">
                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                       <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center border border-orange-100 shadow-inner">
-                          <AdjustmentsHorizontalIcon className="w-8 h-8 text-[#f97316]" />
+                          <ChartBarIcon className="w-8 h-8 text-[#f97316]" />
                         </div>
                         <div>
                           <h3 className="text-2xl font-black text-[#2d2621] tracking-tight">Varga Explorer</h3>
-                          <p className="text-xs font-bold text-[#8c7e74] uppercase tracking-widest">Select divisional perspective for analysis</p>
+                          <p className="text-xs font-bold text-[#8c7e74] uppercase tracking-widest">Select divisional perspective</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 w-full lg:w-auto">
-                        <button onClick={() => exportToPDF(chartRef, `${VARGA_INFO[selectedVarga].name} Chart Analysis`, `Chart_D${selectedVarga}.pdf`)} className="flex-1 lg:flex-none px-8 py-3.5 bg-[#f97316] text-white text-[11px] font-black rounded-2xl uppercase flex items-center justify-center gap-2 shadow-xl shadow-orange-500/20 active:scale-95 transition-all">
-                          <ArrowDownTrayIcon className="w-5 h-5" /> Export D{selectedVarga} Report
-                        </button>
-                      </div>
+                      <button onClick={() => exportToPDF(chartRef, `${VARGA_INFO[selectedVarga].name} Chart Analysis`, `Chart_D${selectedVarga}.pdf`)} className="px-8 py-3.5 bg-[#f97316] text-white text-[11px] font-black rounded-2xl uppercase flex items-center gap-2 shadow-xl shadow-orange-500/20">
+                        <ArrowDownTrayIcon className="w-5 h-5" /> Export Report
+                      </button>
                    </div>
 
-                   {/* Modern Varga Selector Tabs */}
                    <div className="flex flex-wrap gap-2.5 pb-2 border-b border-[#f1ebe6]">
                       {[1, 9, 10].map(vNum => (
                         <button
@@ -449,7 +501,7 @@ const App: React.FC = () => {
                           onClick={() => setSelectedVarga(vNum)}
                           className={`px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-widest transition-all border-2 flex items-center gap-3 ${
                             selectedVarga === vNum 
-                            ? 'bg-[#f97316] border-[#f97316] text-white shadow-xl shadow-orange-500/20 translate-y-[-2px]' 
+                            ? 'bg-[#f97316] border-[#f97316] text-white shadow-xl shadow-orange-500/20' 
                             : 'bg-white border-[#f1ebe6] text-[#8c7e74] hover:border-orange-200 hover:text-orange-500'
                           }`}
                         >
@@ -457,159 +509,64 @@ const App: React.FC = () => {
                           D{vNum} - {VARGA_INFO[vNum].name}
                         </button>
                       ))}
-                      
-                      <div className="h-12 w-px bg-slate-100 mx-2 hidden sm:block" />
-
-                      <div className="relative group flex-1 min-w-[240px] max-w-md">
-                         <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                            <CommandLineIcon className="w-5 h-5 text-slate-400" />
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Choose Division</span>
-                         </div>
-                         <select 
-                            value={selectedVarga} 
-                            onChange={(e) => setSelectedVarga(parseInt(e.target.value))}
-                            className="w-full bg-slate-50 border border-[#f1ebe6] text-[11px] font-black uppercase tracking-widest rounded-2xl pl-32 pr-12 py-4 cursor-pointer focus:ring-4 focus:ring-orange-500/5 transition-all outline-none appearance-none hover:bg-white"
-                         >
-                            <option value={1} className="hidden">Select Divisional Chart</option>
-                            {Object.entries(VARGA_INFO).map(([val, info]) => (
-                              <option key={val} value={val}>D{val} - {info.name} ({info.significance})</option>
-                            ))}
-                         </select>
-                         <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <ChevronDownIcon className="w-5 h-5 text-slate-400" />
-                         </div>
-                      </div>
                    </div>
 
-                   {/* Varga Context Information */}
                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-4">
                       <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#f97316]">
                         <InformationCircleIcon className="w-6 h-6" />
                       </div>
                       <div>
                         <h4 className="text-sm font-black text-[#2d2621] uppercase tracking-widest">{VARGA_INFO[selectedVarga].name} Focus</h4>
-                        <p className="text-xs font-bold text-[#8c7e74] mt-1 leading-relaxed">Currently analyzing the "{VARGA_INFO[selectedVarga].significance}" layer of the natal destiny. Divisional charts refine the resolution of specific life areas.</p>
+                        <p className="text-xs font-bold text-[#8c7e74] mt-1 leading-relaxed">{VARGA_INFO[selectedVarga].significance}</p>
                       </div>
                    </div>
                 </div>
 
                 <div ref={chartRef} className="space-y-12 bg-white p-10 rounded-[48px] border border-[#f1ebe6] shadow-sm">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-                    <NorthIndianChart chart={activeChart} title={`${VARGA_INFO[selectedVarga].name} (D${selectedVarga})`} />
+                    <NorthIndianChart chart={chart} title={`${VARGA_INFO[selectedVarga].name} (D${selectedVarga})`} />
                     
                     <div className="space-y-8">
                       <div className="flex items-center justify-between mb-2 px-2">
                         <h4 className="text-sm font-black uppercase tracking-[0.2em] text-[#2d2621] flex items-center gap-2">
-                           <BoltIcon className="w-5 h-5 text-orange-400" /> High-Fidelity Planetary Details
+                           <BoltIcon className="w-5 h-5 text-orange-400" /> Planetary Details
                         </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-[10px] font-black text-[#8c7e74] uppercase tracking-tighter">Live Calculation</span>
-                        </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-6 overflow-y-auto max-h-[900px] pr-4 custom-scrollbar">
-                        {activeChart.points.map((p) => {
-                          const isVargottama = getVargottamaStatus(p);
-                          const hasGandanta = isGandanta(p);
-
-                          return (
-                            <div key={p.planet} className={`p-7 rounded-[32px] border transition-all duration-300 flex items-start gap-8 group relative overflow-hidden shadow-sm ${isVargottama ? 'bg-orange-50/40 border-orange-200' : 'bg-white border-[#f1ebe6] hover:border-orange-300 hover:shadow-lg'}`}>
-                               {isVargottama && (
-                                 <div className="absolute top-0 right-0 px-3 py-1 bg-[#f97316] text-white text-[9px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg z-10 flex items-center gap-1.5">
-                                   <StarIcon className="w-3 h-3 fill-white" /> Vargottama
-                                 </div>
-                               )}
-                               
-                               <div className="w-24 h-24 rounded-[30px] bg-slate-50 border border-[#f1ebe6] flex flex-col items-center justify-center group-hover:bg-[#f97316] group-hover:text-white group-hover:border-transparent transition-all flex-shrink-0 shadow-inner">
-                                  <span className="text-2xl font-black leading-none mb-1">{p.planet.substring(0, 2)}</span>
-                                  <span className="text-[10px] font-black opacity-60 uppercase tracking-widest">H{p.house}</span>
+                      <div className="grid grid-cols-1 gap-6 overflow-y-auto max-h-[600px] pr-4 custom-scrollbar">
+                        {chart.points.map((p) => (
+                          <div key={p.planet} className="p-6 rounded-[24px] border bg-white border-[#f1ebe6] hover:border-orange-300 transition-all">
+                             <div className="flex items-center gap-4 mb-4">
+                               <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-[#f1ebe6] flex flex-col items-center justify-center">
+                                  <span className="text-xl font-black leading-none">{p.planet.substring(0, 2)}</span>
+                                  <span className="text-[9px] font-black opacity-60 uppercase">H{p.house}</span>
                                </div>
-                               
-                               <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-10">
-                                  {/* Pillar 1: Sign & Degree */}
-                                  <div>
-                                     <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                        <ScaleIcon className="w-3.5 h-3.5" /> Placement
-                                     </p>
-                                     <p className="text-[14px] font-black text-[#2d2621] flex items-center gap-2">
-                                        <span className="text-xl leading-none text-[#f97316]">{SIGN_SYMBOLS[p.sign]}</span> {SIGN_NAMES[p.sign]}
-                                     </p>
-                                     <p className="text-[11px] font-bold text-[#2d2621] mt-1 font-mono tracking-tight">{formatDMS(p.degree)}</p>
-                                  </div>
-
-                                  {/* Pillar 2: Nakshatra (User Requested Enhancement) */}
-                                  <div className="sm:col-span-2">
-                                     <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                        <SparklesIcon className="w-3.5 h-3.5" /> Nakshatra & Ruling Planet
-                                     </p>
-                                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                                       <div>
-                                          <p className="text-[15px] font-black text-[#2d2621]">{p.nakshatra}</p>
-                                          <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-black text-[#f97316]">{formatNakDegree(p.nakshatraDegree || 0)}</span>
-                                            <span className="text-[8px] font-bold text-[#8c7e74] uppercase">/ 13°20' Arc</span>
-                                          </div>
-                                       </div>
-                                       <div className="px-3 py-1.5 bg-slate-50/80 border border-slate-100 rounded-xl flex items-center gap-3">
-                                          <div className="text-right">
-                                             <p className="text-[7px] font-black text-[#8c7e74] uppercase tracking-tighter">Ruling Lord</p>
-                                             <p className="text-[11px] font-black text-[#f97316]">{p.nakshatraLord}</p>
-                                          </div>
-                                          <div className="w-7 h-7 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[9px] font-black text-[#2d2621] uppercase">
-                                             {p.nakshatraLord?.substring(0, 2)}
-                                          </div>
-                                       </div>
-                                     </div>
-                                  </div>
-
-                                  {/* Pillar 3: Status & Retrograde */}
-                                  <div className="flex flex-col justify-end">
-                                     <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-2">Cosmic State</p>
-                                     <div className="flex flex-wrap gap-2">
-                                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase shadow-sm border ${
-                                          p.dignity === 'Exalted' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                                          p.dignity === 'Debilitated' ? 'bg-rose-50 border-rose-100 text-rose-600' :
-                                          p.dignity === 'Own Sign' ? 'bg-blue-50 border-blue-100 text-blue-600' :
-                                          'bg-white border-slate-200 text-slate-500'
-                                        }`}>
-                                          {p.dignity}
-                                        </span>
-                                        {p.isRetrograde && (
-                                          <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 uppercase shadow-sm flex items-center gap-1">
-                                             <ClockIcon className="w-3 h-3" /> Vakra
-                                          </span>
-                                        )}
-                                     </div>
-                                  </div>
-
-                                  {/* Pillar 4: Visual Journey (User Requested Enhancement) */}
-                                  <div className="sm:col-span-2 flex flex-col justify-end">
-                                     <div className="flex justify-between items-center mb-2">
-                                        <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest flex items-center gap-1.5">
-                                           <LifebuoyIcon className="w-3 h-3" /> Nakshatra Journey <span className="text-[8px] font-black px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-md">Pada {p.pada}</span>
-                                        </p>
-                                        <span className="text-[10px] font-black text-[#2d2621]">{Math.round(((p.nakshatraDegree || 0) / 13.33) * 100)}%</span>
-                                     </div>
-                                     <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                                        <div 
-                                          className={`h-full transition-all duration-1000 ease-out z-10 ${
-                                            p.dignity === 'Exalted' ? 'bg-emerald-500' : 
-                                            p.dignity === 'Debilitated' ? 'bg-rose-500' : 'bg-[#f97316]'
-                                          }`} 
-                                          style={{ width: `${((p.nakshatraDegree || 0) / 13.33) * 100}%` }} 
-                                        />
-                                        <div className="absolute inset-0 flex justify-between pointer-events-none z-0">
-                                          <div className="w-px h-full bg-slate-200/50 ml-[25%]" />
-                                          <div className="w-px h-full bg-slate-200/50 ml-[25%]" />
-                                          <div className="w-px h-full bg-slate-200/50 ml-[25%]" />
-                                        </div>
-                                     </div>
-                                  </div>
+                               <div>
+                                 <p className="text-lg font-black text-[#2d2621]">{p.planet}</p>
+                                 <p className="text-sm text-[#8c7e74]">{SIGN_NAMES[p.sign]} • {formatDMS(p.degree)}</p>
                                </div>
-                            </div>
-                          );
-                        })}
+                             </div>
+                             <div className="flex flex-wrap gap-2">
+                                <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase border ${
+                                  p.dignity === 'Exalted' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                  p.dignity === 'Debilitated' ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                                  'bg-white border-slate-200 text-slate-500'
+                                }`}>
+                                  {p.dignity || 'Neutral'}
+                                </span>
+                                {p.isRetrograde && (
+                                  <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 uppercase">
+                                    Retrograde
+                                  </span>
+                                )}
+                                {p.nakshatra && (
+                                  <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
+                                    {p.nakshatra}
+                                  </span>
+                                )}
+                             </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -619,29 +576,29 @@ const App: React.FC = () => {
 
             {activeTab === 'yogas' && (
               <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="card-modern p-8 bg-gradient-to-br from-white to-orange-50 text-[#2d2621] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 overflow-hidden relative border border-orange-100 shadow-sm">
-                  <div className="relative z-10 flex items-center gap-5">
-                    <div className="w-16 h-16 bg-orange-500/10 rounded-3xl flex items-center justify-center border border-orange-500/20 shadow-xl shadow-orange-500/5">
+                <div className="p-8 bg-gradient-to-br from-white to-orange-50 rounded-3xl border border-orange-100">
+                  <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 bg-orange-500/10 rounded-3xl flex items-center justify-center border border-orange-500/20">
                       <SparklesIcon className="w-10 h-10 text-orange-500" />
                     </div>
                     <div>
                       <h3 className="text-3xl font-black tracking-tight">{yogas.length} Cosmic Alignments (Yogas)</h3>
-                      <p className="text-[#f97316] text-sm font-bold uppercase tracking-widest mt-1">Advanced Vedic Detection Engine</p>
+                      <p className="text-[#f97316] text-sm font-bold uppercase tracking-widest mt-1">Detected from your chart</p>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
                   {yogas.map((y, i) => (
-                    <div key={i} className="card-modern flex flex-col group overflow-hidden hover:border-[#f97316] transition-all bg-white relative p-7">
+                    <div key={i} className="bg-white rounded-3xl p-7 border border-[#f1ebe6] hover:border-[#f97316] transition-all">
                        <div className="flex justify-between items-start mb-6">
-                          <h4 className="text-xl font-black text-[#2d2621] leading-tight group-hover:text-[#f97316] transition-colors">{y.name}</h4>
-                          <span className="text-[10px] font-black px-3 py-1.5 bg-orange-50 text-[#f97316] rounded-xl uppercase tracking-widest border border-orange-100">{y.category}</span>
+                          <h4 className="text-xl font-black text-[#2d2621] leading-tight">{y.name}</h4>
+                          <span className="text-[10px] font-black px-3 py-1.5 bg-orange-50 text-[#f97316] rounded-xl uppercase border border-orange-100">{y.category}</span>
                        </div>
-                       <p className="text-xs text-[#8c7e74] font-bold mb-6 italic leading-relaxed">"{y.description}"</p>
+                       <p className="text-xs text-[#8c7e74] font-bold mb-6 italic">"{y.description}"</p>
                        <p className="text-sm text-[#2d2621] font-semibold leading-relaxed mb-6">{y.interpretation}</p>
-                       <div className="mt-auto pt-6 border-t border-[#f1ebe6] flex items-center justify-between">
+                       <div className="pt-6 border-t border-[#f1ebe6] flex items-center justify-between">
                           <span className="text-[10px] font-black text-[#8c7e74] uppercase">Potency</span>
-                          <span className="text-[10px] font-black text-[#f97316] uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-lg flex items-center gap-1">{y.strength}% Strength</span>
+                          <span className="text-[10px] font-black text-[#f97316] uppercase bg-orange-50 px-2 py-0.5 rounded-lg">{y.strength}% Strength</span>
                        </div>
                     </div>
                   ))}
@@ -665,6 +622,35 @@ const App: React.FC = () => {
       </main>
     </div>
   );
-};
+}
 
-export default App;
+// Main App with Auth Provider
+function App() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fcf8f5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#f97316]/20 border-t-[#f97316] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#8c7e74] font-bold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthView />;
+  }
+
+  return <AppContent />;
+}
+
+// Export with Provider wrapper
+export default function AppWithProviders() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
