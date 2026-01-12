@@ -9,12 +9,13 @@ class ExpenseStatus(str, Enum):
     REJECTED = "rejected"
 
 class ExpenseBase(BaseModel):
-    campaign_id: Optional[str] = None
-    driver_id: Optional[str] = None
+    campaign_id: Optional[int] = None
+    driver_id: Optional[int] = None
     expense_type: str
     amount: float
     description: Optional[str] = None
     bill_url: Optional[str] = None
+    bill_image: Optional[str] = None
     submitted_date: Optional[date] = None
 
 class ExpenseCreate(ExpenseBase):
@@ -25,6 +26,7 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
     description: Optional[str] = None
     bill_url: Optional[str] = None
+    bill_image: Optional[str] = None
     status: Optional[ExpenseStatus] = None
 
 class ExpenseResponse(ExpenseBase):

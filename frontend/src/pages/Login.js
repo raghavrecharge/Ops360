@@ -21,6 +21,8 @@ const Login = () => {
       const { data } = await authAPI.login(formData);
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('permissions', JSON.stringify(data.permissions || []));
+      localStorage.setItem('menu_items', JSON.stringify(data.menu_items || []));
       toast.success('Login successful!');
       navigate('/');
     } catch (error) {
@@ -83,9 +85,7 @@ const Login = () => {
               )}
             </Button>
           </form>
-          <p className="text-xs text-center text-slate-500 mt-6">
-            Demo: Use register endpoint to create admin user
-          </p>
+         
         </CardContent>
       </Card>
     </div>

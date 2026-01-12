@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip
@@ -23,5 +24,5 @@ COPY . .
 # Expose port (match docker-compose)
 EXPOSE 8001
 
-# CMD with correct module reference
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+# CMD with correct module reference for new app structure
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

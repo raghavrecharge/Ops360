@@ -23,10 +23,23 @@ class ExpenseRepository(BaseRepository):
         return await self.get_all(db, {"status": "pending"})
     
     async def get_todays_total(self, db: AsyncSession) -> float:
-        """Get today's total expenses"""
+        """Get today's total expenses (or recent if no data today)"""
         today = date.today()
+        
+        # Try today's expenses first
         query = select(func.sum(Expense.amount)).where(
-            Expense.submitted_date == today
+            Expense.submitted_date == today,
+            Expense.is_active == True
+        )
+        result = await db.execute(query)
+        total = result.scalar()
+        
+        if total and total > 0:
+            return float(total)
+        
+        # Fallback: Get total of all active expenses if no data for today
+        query = select(func.sum(Expense.amount)).where(
+            Expense.is_active == True
         )
         result = await db.execute(query)
         total = result.scalar()

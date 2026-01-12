@@ -15,3 +15,5 @@ class Vendor(Base, BaseModel):
     # Relationships
     vehicles = relationship("Vehicle", back_populates="vendor", cascade="all, delete-orphan")
     drivers = relationship("Driver", back_populates="vendor", cascade="all, delete-orphan")
+    invoices = relationship("Invoice", back_populates="vendor", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="vendor", cascade="all, delete-orphan")

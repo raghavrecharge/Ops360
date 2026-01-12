@@ -76,3 +76,15 @@ class ExpenseService:
             )
 
         return ExpenseResponse.model_validate(expense)
+    
+    async def delete_expense(self, db: AsyncSession, expense_id: int):
+        """Delete expense (soft delete)"""
+        expense = await self.expense_repo.get_by_id(db, expense_id)
+        
+        if not expense:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Expense not found"
+            )
+        
+        await self.expense_repo.delete(db, expense_id)

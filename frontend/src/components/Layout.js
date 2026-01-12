@@ -1,33 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Briefcase, Megaphone, Building2,
   Truck, UserCircle, UserPlus, ClipboardList, Receipt,
-  FileText, DollarSign, BarChart3, Settings, Menu, X, LogOut
+  FileText, DollarSign, BarChart3, Settings, Menu, X, LogOut, Activity, Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '../hooks/usePermissions';
 
-const sidebarItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/clients', icon: Users, label: 'Clients' },
-  { path: '/projects', icon: Briefcase, label: 'Projects' },
-  { path: '/campaigns', icon: Megaphone, label: 'Campaigns' },
-  { path: '/vendors', icon: Building2, label: 'Vendors' },
-  { path: '/vehicles', icon: Truck, label: 'Vehicles' },
-  { path: '/drivers', icon: UserCircle, label: 'Drivers' },
-  { path: '/promoters', icon: UserPlus, label: 'Promoters / Anchors' },
-  { path: '/operations', icon: ClipboardList, label: 'Operations' },
-  { path: '/expenses', icon: Receipt, label: 'Expenses' },
-  { path: '/reports', icon: FileText, label: 'Reports' },
-  { path: '/accounts', icon: DollarSign, label: 'Accounts & Payments' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+const allSidebarItems = [
+  { path: '/', icon: LayoutDashboard, label: 'Dashboard', menuKey: 'dashboard', adminOnly: true },
+  { path: '/vendor-dashboard', icon: Building2, label: 'Vendor Dashboard', menuKey: 'vendor-dashboard' },
+  { path: '/client-servicing-dashboard', icon: BarChart3, label: 'Client Servicing Dashboard', menuKey: 'client-servicing-dashboard' },
+  { path: '/driver-dashboard', icon: Truck, label: 'Driver Dashboard', menuKey: 'driver-dashboard' },
+  { path: '/clients', icon: Users, label: 'Clients', menuKey: 'clients' },
+  { path: '/projects', icon: Briefcase, label: 'Projects', menuKey: 'projects' },
+  { path: '/campaigns', icon: Megaphone, label: 'Campaigns', menuKey: 'campaigns' },
+  { path: '/vendors', icon: Building2, label: 'Vendors', menuKey: 'vendors' },
+  { path: '/vehicles', icon: Truck, label: 'Vehicles', menuKey: 'vehicles' },
+  { path: '/drivers', icon: UserCircle, label: 'Drivers', menuKey: 'drivers' },
+  { path: '/promoters', icon: UserPlus, label: 'Promoters / Anchors', menuKey: 'promoters' },
+  { path: '/promoter-activities', icon: Activity, label: 'Promoter Activities', menuKey: 'promoter-activities' },
+  { path: '/operations', icon: ClipboardList, label: 'Operations', menuKey: 'operations' },
+  { path: '/expenses', icon: Receipt, label: 'Expenses', menuKey: 'expenses' },
+  { path: '/reports', icon: FileText, label: 'Reports', menuKey: 'reports' },
+  { path: '/accounts', icon: DollarSign, label: 'Accounts & Payments', menuKey: 'accounts' },
+  { path: '/analytics', icon: BarChart3, label: 'Analytics', menuKey: 'analytics' },
+  { path: '/ml-insights', icon: Brain, label: 'ML Insights', menuKey: 'ml-insights', adminOnly: true },
+  { path: '/settings/user-registration', icon: UserPlus, label: 'New Registration', menuKey: 'user-registration', adminOnly: true },
+  { path: '/settings', icon: Settings, label: 'Settings', menuKey: 'settings' },
 ];
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { isMenuVisible, loading } = usePermissions();
+
+  // Filter sidebar items based on user's menu permissions
+  const sidebarItems = useMemo(() => {
+    if (loading) return [];
+    
+    console.log('🔍 Menu Visibility Debug:', {
+      userRole: user.role,
+      loading: loading,
+      totalMenuItems: allSidebarItems.length,
+      projectsVisible: isMenuVisible('projects'),
+      allVisibleMenus: allSidebarItems.map(item => ({
+        label: item.label,
+        menuKey: item.menuKey,
+        visible: item.adminOnly ? user.role === 'admin' : isMenuVisible(item.menuKey)
+      }))
+    });
+    
+    return allSidebarItems.filter(item => {
+      // Admin-only items - show if user is admin, skip permission check
+      if (item.adminOnly) {
+        return user.role === 'admin';
+      }
+      // Permission-based items
+      return isMenuVisible(item.menuKey);
+    });
+  }, [isMenuVisible, loading, user.role]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -104,8 +138,8 @@ const Layout = () => {
         <header className="bg-white border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-800">Welcome back, {user.name}</h2>
-              <p className="text-sm text-slate-500 mt-0.5">{user.role}</p>
+              <h2 className="text-xl font-semibold text-slate-800">Welcome back, {user.name} Ji</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{user.role} </p>
             </div>
           </div>
         </header>

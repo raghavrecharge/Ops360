@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { vendorsAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const VendorDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const { data: vendor, isLoading } = useQuery({
     queryKey: ['vendor', id],
     queryFn: () => vendorsAPI.getOne(id).then(res => res.data),
@@ -21,7 +23,9 @@ const VendorDetails = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{vendor.name}</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate(`/vendors/${id}/edit`)}>Edit</Button>
+          {hasPermission('vendor.update') && (
+            <Button onClick={() => navigate(`/vendors/${id}/edit`)}>Edit</Button>
+          )}
           <Button variant="ghost" onClick={() => navigate('/vendors')}>Back</Button>
         </div>
       </div>

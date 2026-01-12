@@ -13,6 +13,8 @@ class Vehicle(Base, BaseModel):
     rc_validity = Column(Date)
     insurance_validity = Column(Date)
     permit_validity = Column(Date)
+    rc_image = Column(String(500))  # Path to RC document image
+    insurance_image = Column(String(500))  # Path to insurance document image
     
     # Relationships
     vendor = relationship("Vendor", back_populates="vehicles")

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { driversAPI, vendorsAPI } from '@/lib/api';
+import { driversAPI, vendorsAPI, vehiclesAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +12,10 @@ const DriverCreate = () => {
     queryKey: ['vendors'],
     queryFn: () => vendorsAPI.getAll().then(res => res.data),
   });
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: () => vehiclesAPI.getAll().then(res => res.data),
+  });
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -19,13 +23,22 @@ const DriverCreate = () => {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [licenseValidity, setLicenseValidity] = useState('');
   const [vendorId, setVendorId] = useState('');
+  const [vehicleId, setVehicleId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { name, phone, email, license_number: licenseNumber, license_validity: licenseValidity || null, vendor_id: vendorId ? parseInt(vendorId,10) : null };
+      const payload = { 
+        name, 
+        phone, 
+        email, 
+        license_number: licenseNumber, 
+        license_validity: licenseValidity || null, 
+        vendor_id: vendorId ? parseInt(vendorId,10) : null,
+        vehicle_id: vehicleId ? parseInt(vehicleId,10) : null
+      };
       if (id) {
         await driversAPI.update(id, payload);
       } else {
@@ -53,6 +66,7 @@ const DriverCreate = () => {
       setLicenseNumber(existing.license_number || '');
       setLicenseValidity(existing.license_validity || '');
       setVendorId(existing.vendor_id ? String(existing.vendor_id) : '');
+      setVehicleId(existing.vehicle_id ? String(existing.vehicle_id) : '');
     }
   }, [existing]);
 
@@ -85,6 +99,13 @@ const DriverCreate = () => {
               <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="mt-1 block w-full border rounded-md p-2">
                 <option value="">{vendorsLoading ? 'Loading vendors...' : 'Select vendor (optional)'}</option>
                 {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Assigned Vehicle</label>
+              <select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} className="mt-1 block w-full border rounded-md p-2">
+                <option value="">{vehiclesLoading ? 'Loading vehicles...' : 'Select vehicle (optional)'}</option>
+                {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number} - {v.vehicle_type}</option>)}
               </select>
             </div>
             <div className="flex gap-2">

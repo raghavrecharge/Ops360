@@ -5,10 +5,12 @@ import { clientsAPI, expensesAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const ClientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
 
   const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ['client', id],
@@ -29,7 +31,9 @@ const ClientDetails = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{client.name}</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate(`/clients/${id}/edit`)}>Edit</Button>
+          {hasPermission('client.update') && (
+            <Button onClick={() => navigate(`/clients/${id}/edit`)}>Edit</Button>
+          )}
           <Button variant="ghost" onClick={() => navigate('/clients')}>Back</Button>
         </div>
       </div>

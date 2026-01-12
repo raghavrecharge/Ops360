@@ -3,7 +3,7 @@
 ## 🚀 Enterprise-Grade SaaS Platform for Fleet & Campaign Operations
 
 ### Overview
-
+Jadu 
 Production-ready full-stack platform that replaces Excel-based fleet operations workflows with an integrated system for managing clients, projects, campaigns, vendors, vehicles, drivers, and comprehensive reporting.
 
 ### 🏗️ Architecture

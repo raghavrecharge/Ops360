@@ -11,6 +11,9 @@ from app.models.driver import Driver
 from app.models.expense import Expense, ExpenseStatus
 from app.models.report import Report
 from app.models.promoter import Promoter
+from app.models.promoter_activity import PromoterActivity
+from app.models.invoice import Invoice, InvoiceStatus
+from app.models.payment import Payment, PaymentStatus, PaymentMethod
 
 __all__ = [
     'Base',
@@ -28,5 +31,11 @@ __all__ = [
     'Expense',
     'ExpenseStatus',
     'Report',
-    'Promoter'
+    'Promoter',
+    'PromoterActivity',
+    'Invoice',
+    'InvoiceStatus',
+    'Payment',
+    'PaymentStatus',
+    'PaymentMethod',
 ]

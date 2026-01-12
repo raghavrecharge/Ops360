@@ -1,9 +1,12 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.schemas.auth import UserCreate, UserLogin, UserResponse, TokenResponse
 from app.models.user import User
+from app.models.vendor import Vendor
+from app.core.config import settings
+from app.core.role_permissions import RolePermissions, MENU_VISIBILITY
 
 class AuthService:
     
@@ -20,13 +23,36 @@ class AuthService:
                 detail="Email already registered"
             )
         
+        # Auto-link vendor_id for vendor role
+        vendor_id = user_data.vendor_id
+        if user_data.role == "vendor" and not vendor_id:
+            # Try to find existing vendor by email or phone
+            vendor_query = select(Vendor).where(
+                and_(
+                    Vendor.is_active == 1,
+                    or_(
+                        Vendor.email == user_data.email,
+                        Vendor.phone == user_data.phone if user_data.phone else False
+                    )
+                )
+            )
+            vendor_result = await db.execute(vendor_query)
+            existing_vendor = vendor_result.scalar_one_or_none()
+            
+            if existing_vendor:
+                vendor_id = existing_vendor.id
+                print(f"✅ Auto-linked vendor: {existing_vendor.company_name} (ID: {vendor_id}) to user: {user_data.email}")
+            else:
+                print(f"⚠️ No existing vendor found for email: {user_data.email} or phone: {user_data.phone}")
+        
         # Create user
         user = User(
             email=user_data.email,
             name=user_data.name,
             phone=user_data.phone,
             password_hash=get_password_hash(user_data.password),
-            role=user_data.role
+            role=user_data.role,
+            vendor_id=vendor_id
         )
         
         db.add(user)
@@ -59,16 +85,24 @@ class AuthService:
             data={
                 "user_id": user.id,
                 "email": user.email,
-                "role": user.role.value
+                "role": user.role.value,
+                "vendor_id": user.vendor_id
             }
         )
         
         user_response = UserResponse.model_validate(user)
         
+        # Get permissions and menu items for this role
+        user_role = user.role.value
+        permissions = [perm.value for perm in RolePermissions.get_permissions(user_role)]
+        menu_items = MENU_VISIBILITY.get(user_role, ["dashboard"])
+        
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            user=user_response
+            user=user_response,
+            permissions=permissions,
+            menu_items=menu_items
         )
     
     async def get_current_user_info(self, db: AsyncSession, email: str) -> UserResponse:

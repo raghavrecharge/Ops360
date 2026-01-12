@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date, datetime
 from enum import Enum
 
@@ -29,7 +29,7 @@ class CampaignBase(BaseModel):
     locations: Optional[str] = None
 
 class CampaignCreate(CampaignBase):
-    pass
+    vendor_ids: Optional[List[int]] = []  # Vendors to assign to this campaign
 
 class CampaignUpdate(BaseModel):
     name: Optional[str] = None
@@ -40,11 +40,15 @@ class CampaignUpdate(BaseModel):
     end_date: Optional[date] = None
     budget: Optional[float] = None
     locations: Optional[str] = None
+    vendor_ids: Optional[List[int]] = []  # Vendors to assign/reassign
 
 class CampaignResponse(CampaignBase):
     id: int
     status: CampaignStatus
     created_at: datetime
+    project_name: Optional[str] = None
+    client_name: Optional[str] = None
+    vendor_names: Optional[List[str]] = []
     
     class Config:
         from_attributes = True

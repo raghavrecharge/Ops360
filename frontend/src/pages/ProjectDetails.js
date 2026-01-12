@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { projectsAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatDate } from '@/lib/utils';
 
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
     queryFn: () => projectsAPI.getOne(id).then(res => res.data),
@@ -21,7 +23,9 @@ const ProjectDetails = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{project.name}</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate(`/projects/${id}/edit`)}>Edit</Button>
+          {hasPermission('project.update') && (
+            <Button onClick={() => navigate(`/projects/${id}/edit`)}>Edit</Button>
+          )}
           <Button variant="ghost" onClick={() => navigate('/projects')}>Back</Button>
         </div>
       </div>

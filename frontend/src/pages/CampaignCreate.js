@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { campaignsAPI, projectsAPI, clientsAPI } from '@/lib/api';
+import { campaignsAPI, projectsAPI, clientsAPI, vendorsAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -33,12 +33,17 @@ const CampaignCreate = () => {
     queryKey: ['clients'],
     queryFn: () => clientsAPI.getAll().then(res => res.data),
   });
+  const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: () => vendorsAPI.getAll().then(res => res.data),
+  });
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
   const [projectId, setProjectId] = useState('');
   const [clientId, setClientId] = useState('');
+  const [selectedVendors, setSelectedVendors] = useState([]);
   const [campaignType, setCampaignType] = useState('l_shape');
   const [status, setStatus] = useState('planning');
   const [startDate, setStartDate] = useState('');
@@ -61,6 +66,7 @@ const CampaignCreate = () => {
         end_date: endDate || null,
         budget: budget ? parseFloat(budget) : null,
         locations,
+        vendor_ids: selectedVendors, // Send selected vendor IDs
       };
       if (id) {
         await campaignsAPI.update(id, payload);
@@ -102,6 +108,17 @@ const CampaignCreate = () => {
     }
   }, [existing, projects]);
 
+  // Populate selected vendors when editing
+  useEffect(() => {
+    if (existing && existing.vendor_names && vendors.length) {
+      // Map vendor names to vendor IDs
+      const vendorIds = vendors
+        .filter(v => existing.vendor_names.includes(v.name))
+        .map(v => v.id);
+      setSelectedVendors(vendorIds);
+    }
+  }, [existing, vendors]);
+
   return (
     <div data-testid="campaign-create-page">
       <Card>
@@ -138,6 +155,44 @@ const CampaignCreate = () => {
             <div>
               <label className="block text-sm font-medium text-slate-700">Description</label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                Assign Vendors <span className="text-slate-500">(Select one or more vendors for this campaign)</span>
+              </label>
+              <div className="mt-2 border rounded-md p-3 bg-slate-50 max-h-48 overflow-y-auto">
+                {vendorsLoading ? (
+                  <p className="text-slate-500">Loading vendors...</p>
+                ) : vendors.length === 0 ? (
+                  <p className="text-slate-500">No vendors available</p>
+                ) : (
+                  vendors.map(vendor => (
+                    <label key={vendor.id} className="flex items-center gap-2 py-2 hover:bg-slate-100 px-2 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedVendors.includes(vendor.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedVendors([...selectedVendors, vendor.id]);
+                          } else {
+                            setSelectedVendors(selectedVendors.filter(id => id !== vendor.id));
+                          }
+                        }}
+                        className="w-4 h-4 text-indigo-600 rounded"
+                      />
+                      <span className="text-sm">
+                        {vendor.name} {vendor.company && `(${vendor.company})`}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+              {selectedVendors.length > 0 && (
+                <p className="mt-2 text-sm text-green-600">
+                  ✓ {selectedVendors.length} vendor{selectedVendors.length > 1 ? 's' : ''} selected
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

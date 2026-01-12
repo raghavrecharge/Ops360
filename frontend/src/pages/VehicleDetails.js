@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { vehiclesAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/hooks/usePermissions';
 import { formatDate } from '@/lib/utils';
 
 const VehicleDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ['vehicle', id],
     queryFn: () => vehiclesAPI.getOne(id).then(res => res.data),
@@ -21,7 +23,9 @@ const VehicleDetails = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{vehicle.vehicle_number}</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate(`/vehicles/${id}/edit`)}>Edit</Button>
+          {hasPermission('vehicle.update') && (
+            <Button onClick={() => navigate(`/vehicles/${id}/edit`)}>Edit</Button>
+          )}
           <Button variant="ghost" onClick={() => navigate('/vehicles')}>Back</Button>
         </div>
       </div>
@@ -39,6 +43,66 @@ const VehicleDetails = () => {
           <div><strong>Permit Validity:</strong> {vehicle.permit_validity ? formatDate(vehicle.permit_validity) : '-'}</div>
           <div className="text-sm text-slate-500 mt-3">Created: {formatDate(vehicle.created_at)}</div>
         </div>
+
+        {/* Vehicle Documents Section */}
+        {(vehicle.rc_image || vehicle.insurance_image) && (
+          <div className="bg-white p-4 rounded shadow">
+            <h3 className="font-semibold mb-4">Vehicle Documents</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* RC Document */}
+              {vehicle.rc_image && (
+                <div>
+                  <h4 className="font-medium text-slate-700 mb-2">RC Document</h4>
+                  <img 
+                    src={
+                      vehicle.rc_image.startsWith('http') 
+                        ? vehicle.rc_image 
+                        : vehicle.rc_image.startsWith('/uploads/') 
+                          ? `http://localhost:8001${vehicle.rc_image}`
+                          : `http://localhost:8001/uploads/vehicles/${vehicle.rc_image}`
+                    }
+                    alt="RC Document"
+                    className="max-w-full h-auto rounded-lg shadow-md border border-slate-200"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div style={{display: 'none'}} className="text-sm text-slate-600 p-3 bg-slate-50 rounded">
+                    <p className="font-medium mb-1">Image not found</p>
+                    <p className="break-all">{vehicle.rc_image}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Insurance Document */}
+              {vehicle.insurance_image && (
+                <div>
+                  <h4 className="font-medium text-slate-700 mb-2">Insurance Document</h4>
+                  <img 
+                    src={
+                      vehicle.insurance_image.startsWith('http') 
+                        ? vehicle.insurance_image 
+                        : vehicle.insurance_image.startsWith('/uploads/') 
+                          ? `http://localhost:8001${vehicle.insurance_image}`
+                          : `http://localhost:8001/uploads/vehicles/${vehicle.insurance_image}`
+                    }
+                    alt="Insurance Document"
+                    className="max-w-full h-auto rounded-lg shadow-md border border-slate-200"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div style={{display: 'none'}} className="text-sm text-slate-600 p-3 bg-slate-50 rounded">
+                    <p className="font-medium mb-1">Image not found</p>
+                    <p className="break-all">{vehicle.insurance_image}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

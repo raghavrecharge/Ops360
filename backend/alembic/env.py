@@ -29,33 +29,33 @@ if database_url:
 
 try:
     import backend.models as backend_models  # type: ignore
-    except Exception:
-        # running from backend/ folder, fall back to relative import
-        import sys
-        sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/../'))
-        import models as backend_models  # type: ignore
+except Exception:
+    # running from backend/ folder, fall back to relative import
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/../'))
+    import models as backend_models  # type: ignore
 
-    # Also try to import app-level models (app/models) and merge metadata so Alembic
-    # sees all tables defined in both codepaths.
-    try:
-        import app.models.base as app_models_base  # type: ignore
-    except Exception:
-        app_models_base = None
+# Also try to import app-level models (app/models) and merge metadata so Alembic
+# sees all tables defined in both codepaths.
+try:
+    import app.models.base as app_models_base  # type: ignore
+except Exception:
+    app_models_base = None
 
-    from sqlalchemy import MetaData
+from sqlalchemy import MetaData
 
-    target_metadata = MetaData()
+target_metadata = MetaData()
 
-    # copy backend models metadata
-    if hasattr(backend_models, 'Base') and getattr(backend_models, 'Base') is not None:
-        for t in backend_models.Base.metadata.tables.values():
+# copy backend models metadata
+if hasattr(backend_models, 'Base') and getattr(backend_models, 'Base') is not None:
+    for t in backend_models.Base.metadata.tables.values():
+        t.tometadata(target_metadata)
+
+# copy app models metadata if available
+if app_models_base and hasattr(app_models_base, 'Base') and getattr(app_models_base, 'Base') is not None:
+    for t in app_models_base.Base.metadata.tables.values():
+        if t.name not in target_metadata.tables:
             t.tometadata(target_metadata)
-
-    # copy app models metadata if available
-    if app_models_base and hasattr(app_models_base, 'Base') and getattr(app_models_base, 'Base') is not None:
-        for t in app_models_base.Base.metadata.tables.values():
-            if t.name not in target_metadata.tables:
-                t.tometadata(target_metadata)
 
 
 def run_migrations_offline():

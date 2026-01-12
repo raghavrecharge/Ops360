@@ -18,6 +18,7 @@ class Expense(Base, BaseModel):
     amount = Column(Float, nullable=False)
     description = Column(Text)
     bill_url = Column(String(500))
+    bill_image = Column(String(500))
     status = Column(SQLEnum(ExpenseStatus), default=ExpenseStatus.PENDING)
     submitted_date = Column(Date)
     approved_date = Column(Date)

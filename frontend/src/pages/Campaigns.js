@@ -1,11 +1,13 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignsAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, MapPin } from 'lucide-react';
+import { Plus, Calendar, MapPin, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { toast } from 'react-hot-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const statusColors = {
   planning: 'bg-blue-100 text-blue-700',
@@ -18,10 +20,36 @@ const statusColors = {
 
 const Campaigns = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
+  
+  // Get current user role
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = user.role === 'admin';
+  
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['campaigns'],
     queryFn: () => campaignsAPI.getAll().then(res => res.data),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => campaignsAPI.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['campaigns']); // Refresh campaigns list
+      queryClient.invalidateQueries(['dashboardStats']); // Refresh admin dashboard
+      queryClient.invalidateQueries(['vendor-dashboard']); // Refresh vendor dashboard
+      toast.success('Campaign deleted successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete campaign');
+    },
+  });
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   return (
     <div data-testid="campaigns-page">
@@ -30,9 +58,11 @@ const Campaigns = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Campaigns</h1>
           <p className="text-slate-600">Manage and monitor campaign execution</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-campaign-btn" onClick={() => navigate('/campaigns/new')}>
-          <Plus className="mr-2 h-4 w-4" /> Create Campaign
-        </Button>
+        {hasPermission('campaign.create') && (
+          <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-campaign-btn" onClick={() => navigate('/campaigns/new')}>
+            <Plus className="mr-2 h-4 w-4" /> Create Campaign
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -60,7 +90,7 @@ const Campaigns = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-slate-600 line-clamp-2">{campaign.description || 'No description'}</p>
-                {campaign.budget && (
+                {isAdmin && campaign.budget && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium">Budget: {formatCurrency(campaign.budget)}</span>
                   </div>
@@ -77,7 +107,19 @@ const Campaigns = () => {
                     <span className="line-clamp-1">{campaign.locations}</span>
                   </div>
                 )}
-                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/campaigns/${campaign.id}`)}>Manage Campaign</Button>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => navigate(`/campaigns/${campaign.id}`)}>Manage Campaign</Button>
+                  {hasPermission('campaign.delete') && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(campaign.id, campaign.name)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))
