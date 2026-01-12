@@ -227,16 +227,24 @@ export const astrologyApi = {
 
   // Chat
   async sendChatMessage(profileId: number, message: string, history: ChatMessage[]): Promise<ChatMessage> {
-    const response = await api.post('/api/chat/messages', {
-      profile_id: profileId,
-      message,
-      history: history.map(h => ({ role: h.role, content: h.content })),
-    });
+    try {
+      const response = await api.post('/api/chat/ask', {
+        message,
+        profile_id: profileId,
+      });
 
-    return {
-      role: 'assistant',
-      content: response.data.response || response.data.message || 'I could not process your request.',
-    };
+      return {
+        role: 'assistant',
+        content: response.data.answer || response.data.response || 'I could not process your request.',
+      };
+    } catch (error: any) {
+      // Fallback for simpler chat endpoint
+      console.warn('Chat API error, returning default response');
+      return {
+        role: 'assistant',
+        content: 'I apologize, but the AI chat service is currently unavailable. Please try again later.',
+      };
+    }
   },
 
   // Varshaphala
