@@ -2,6 +2,22 @@ import api from './api';
 import { DivisionalChart, DashaNode, YogaMatch, TransitContext, PlannerData, ShadbalaData, CompatibilityData, Remedy, KBChunk, ChatMessage, Planet, Sign } from '../types';
 import { SIGN_NAMES } from '../constants';
 
+// Helper function to get color for planet
+function getColorForPlanet(planet: string): string {
+  const colors: Record<string, string> = {
+    SUN: 'Orange',
+    MOON: 'White',
+    MARS: 'Red',
+    MERCURY: 'Green',
+    JUPITER: 'Yellow',
+    VENUS: 'White',
+    SATURN: 'Blue',
+    RAHU: 'Gray',
+    KETU: 'Brown',
+  };
+  return colors[planet.toUpperCase()] || 'Gray';
+}
+
 // Transform backend chart response to frontend format
 function transformChartBundle(data: any): DivisionalChart {
   const points = data.planetary_table?.map((pos: any) => ({
