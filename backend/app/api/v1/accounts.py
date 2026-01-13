@@ -27,6 +27,7 @@ async def get_accounts_summary(
     """
     service = AccountsService()
     summary = await service.get_accounts_summary(db)
+    print('summary', summary)
     return summary
 
 @router.get("/metrics", response_model=Dict[str, Any], dependencies=[Depends(Permission.require_admin())])

@@ -93,7 +93,7 @@ const InvoiceDetails = () => {
             <div>
               <h3 className="font-semibold text-slate-700 mb-3">Bill From:</h3>
               <div className="space-y-1">
-                <p className="font-medium text-lg">{invoice.vendor?.company || 'N/A'}</p>
+                <p className="font-medium text-lg">{invoice.vendor?.name || invoice.vendor?.id || 'N/A'}</p>
                 {invoice.vendor?.email && (
                   <p className="text-sm text-slate-600">{invoice.vendor.email}</p>
                 )}

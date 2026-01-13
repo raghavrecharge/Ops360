@@ -62,7 +62,6 @@ const Vendors = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-lg">{vendor.name}</h3>
-                    <p className="text-sm text-slate-600">{vendor.company}</p>
                   </div>
                   {vendor.status && (
                     <span className={`px-2 py-1 rounded text-xs ${vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>

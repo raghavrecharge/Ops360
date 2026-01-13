@@ -47,7 +47,7 @@ const VehicleCreate = () => {
         
         try {
           const uploadResponse = await axios.post(
-            'http://localhost:8001/api/v1/upload/vehicle-document',
+            `${process.env.REACT_APP_BACKEND_URL}/api/v1/upload/vehicle-document`,
             formData,
             {
               headers: { 
@@ -74,7 +74,7 @@ const VehicleCreate = () => {
         
         try {
           const uploadResponse = await axios.post(
-            'http://localhost:8001/api/v1/upload/vehicle-document',
+            `${process.env.REACT_APP_BACKEND_URL}/api/v1/upload/vehicle-document`,
             formData,
             {
               headers: { 

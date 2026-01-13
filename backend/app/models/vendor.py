@@ -6,11 +6,17 @@ class Vendor(Base, BaseModel):
     __tablename__ = "vendors"
     
     name = Column(String(255), nullable=False)
-    company = Column(String(255))
     email = Column(String(255))
     phone = Column(String(20))
     address = Column(Text)
     contact_person = Column(String(255))
+    company_website = Column(String(255))
+    city = Column(String(100))
+    category = Column(String(100))
+    specifications = Column(Text)
+    designation = Column(String(100))
+    status = Column(String(50))
+    remarks = Column(Text)
     
     # Relationships
     vehicles = relationship("Vehicle", back_populates="vendor", cascade="all, delete-orphan")

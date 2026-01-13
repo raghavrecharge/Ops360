@@ -63,8 +63,8 @@ const VehicleDetails = () => {
                       vehicle.rc_image.startsWith('http') 
                         ? vehicle.rc_image 
                         : vehicle.rc_image.startsWith('/uploads/') 
-                          ? `http://localhost:8001${vehicle.rc_image}`
-                          : `http://localhost:8001/uploads/vehicles/${vehicle.rc_image}`
+                          ? `${process.env.REACT_APP_BACKEND_URL}${vehicle.rc_image}`
+                          : `${process.env.REACT_APP_BACKEND_URL}/uploads/vehicles/${vehicle.rc_image}`
                     }
                     alt="RC Document"
                     className="max-w-full h-auto rounded-lg shadow-md border border-slate-200"
@@ -89,8 +89,8 @@ const VehicleDetails = () => {
                       vehicle.insurance_image.startsWith('http') 
                         ? vehicle.insurance_image 
                         : vehicle.insurance_image.startsWith('/uploads/') 
-                          ? `http://localhost:8001${vehicle.insurance_image}`
-                          : `http://localhost:8001/uploads/vehicles/${vehicle.insurance_image}`
+                          ? `${process.env.REACT_APP_BACKEND_URL}${vehicle.insurance_image}`
+                          : `${process.env.REACT_APP_BACKEND_URL}/uploads/vehicles/${vehicle.insurance_image}`
                     }
                     alt="Insurance Document"
                     className="max-w-full h-auto rounded-lg shadow-md border border-slate-200"

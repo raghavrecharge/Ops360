@@ -90,7 +90,6 @@ class Vendor(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    company = Column(String(255))
     email = Column(String(255))
     phone = Column(String(20))
     address = Column(Text)
@@ -137,6 +136,7 @@ class Driver(Base):
     email = Column(String(255))
     license_number = Column(String(100))
     license_validity = Column(Date)
+    license_image = Column(String(255))
     vendor_id = Column(Integer, ForeignKey("vendors.id"))
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
     is_active = Column(Boolean, default=True)

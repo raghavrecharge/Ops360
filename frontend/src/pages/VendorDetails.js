@@ -34,7 +34,6 @@ const VendorDetails = () => {
           <h3 className="font-semibold mb-2">Vendor Details</h3>
           <div className="grid grid-cols-2 gap-4">
             <div><strong>Name:</strong> {vendor.name}</div>
-            <div><strong>Company:</strong> {vendor.company || '-'}</div>
             <div><strong>Email:</strong> {vendor.email || '-'}</div>
             <div><strong>Phone:</strong> {vendor.phone || '-'}</div>
             <div><strong>Contact Person:</strong> {vendor.contact_person || '-'}</div>

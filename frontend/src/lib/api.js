@@ -4,9 +4,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const api = axios.create({
   baseURL: `${API_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  
 });
 
 api.interceptors.request.use(
@@ -93,6 +91,8 @@ export const driversAPI = {
   create: (data) => api.post('/drivers', data),
   update: (id, data) => api.put(`/drivers/${id}`, data),
   delete: (id) => api.delete(`/drivers/${id}`),
+  uploadLicense: (driverId, formData) =>
+  api.post(`/drivers/${driverId}/upload-license`, formData),
 };
 
 export const promotersAPI = {

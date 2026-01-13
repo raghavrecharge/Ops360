@@ -129,7 +129,7 @@ const PromoterActivityDetails = () => {
                 {activity[`${type}_image`] ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-slate-200">
                     <img
-                      src={`http://localhost:8001${activity[`${type}_image`]}`}
+                      src={`${process.env.REACT_APP_BACKEND_URL}${activity[`${type}_image`]}`}
                       alt={`${type} activity`}
                       className="w-full h-full object-cover"
                       onError={(e) => {

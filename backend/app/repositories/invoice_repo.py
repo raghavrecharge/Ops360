@@ -121,7 +121,7 @@ class InvoiceRepository:
         result = await self.db.execute(
             select(
                 Vendor.id,
-                Vendor.company,
+                Vendor.name,
                 func.count(Invoice.id).label('invoice_count'),
                 func.sum(Invoice.amount).label('total_amount'),
                 func.sum(
@@ -139,7 +139,7 @@ class InvoiceRepository:
             )
             .join(Invoice, Invoice.vendor_id == Vendor.id)
             .where(Invoice.is_active == True, Vendor.is_active == True)
-            .group_by(Vendor.id, Vendor.company)
+            .group_by(Vendor.id, Vendor.name)
         )
         return result.all()
     

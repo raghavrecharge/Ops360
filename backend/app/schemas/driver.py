@@ -8,6 +8,7 @@ class DriverBase(BaseModel):
     email: Optional[EmailStr] = None
     license_number: Optional[str] = None
     license_validity: Optional[date] = None
+    license_image: Optional[str] = None
     vendor_id: Optional[int] = None
     vehicle_id: Optional[int] = None  # Assigned vehicle
 
@@ -20,6 +21,7 @@ class DriverUpdate(BaseModel):
     email: Optional[EmailStr] = None
     license_number: Optional[str] = None
     license_validity: Optional[date] = None
+    license_image: Optional[str] = None
     vendor_id: Optional[int] = None
     vehicle_id: Optional[int] = None  # Assigned vehicle
 
@@ -28,6 +30,7 @@ class DriverResponse(DriverBase):
     is_active: bool
     created_at: datetime
     vehicle_number: Optional[str] = None  # Vehicle number for display
+    license_image: Optional[str] = None
     vendor_name: Optional[str] = None  # Vendor name for display
     
     class Config:

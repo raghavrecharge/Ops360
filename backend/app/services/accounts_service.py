@@ -23,6 +23,8 @@ class AccountsService:
             - vendor_summary: Payment breakdown by vendor
             - campaign_summary: Invoice breakdown by campaign
         """
+
+        print('Getting accounts summary...')
         invoice_repo = InvoiceRepository(db)
         payment_repo = PaymentRepository(db)
         
@@ -77,7 +79,7 @@ class AccountsService:
         for row in invoices:
             vendor_map[row.id] = {
                 "vendor_id": row.id,
-                "vendor_name": row.company,
+                "vendor_name": getattr(row, "name", row.id),
                 "invoice_count": row.invoice_count,
                 "total_invoiced": round(float(row.total_amount or 0), 2),
                 "invoice_paid": round(float(row.paid_amount or 0), 2),
@@ -92,7 +94,7 @@ class AccountsService:
             if row.id not in vendor_map:
                 vendor_map[row.id] = {
                     "vendor_id": row.id,
-                    "vendor_name": row.company,
+                    "vendor_name": getattr(row, "name", row.id),
                     "invoice_count": 0,
                     "total_invoiced": 0.0,
                     "invoice_paid": 0.0,

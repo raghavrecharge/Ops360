@@ -9,7 +9,6 @@ const VendorCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [name, setName] = useState('');
-  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -18,11 +17,21 @@ const VendorCreate = () => {
   const [companyWebsite, setCompanyWebsite] = useState('');
   const [city, setCity] = useState('');
   const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [customCategories, setCustomCategories] = useState([]);
   const [specifications, setSpecifications] = useState('');
   const [designation, setDesignation] = useState('');
   const [status, setStatus] = useState('Active');
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim() && !customCategories.includes(customCategory.trim())) {
+      setCustomCategories([...customCategories, customCategory.trim()]);
+      setCategory(customCategory.trim());
+      setCustomCategory('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +39,6 @@ const VendorCreate = () => {
     try {
       const payload = { 
         name, 
-        company, 
         email, 
         phone, 
         address, 
@@ -65,14 +73,20 @@ const VendorCreate = () => {
   useEffect(() => {
     if (existing) {
       setName(existing.name || '');
-      setCompany(existing.company || '');
       setEmail(existing.email || '');
       setPhone(existing.phone || '');
       setAddress(existing.address || '');
       setContactPerson(existing.contact_person || '');
       setCompanyWebsite(existing.company_website || '');
       setCity(existing.city || '');
-      setCategory(existing.category || '');
+      const existingCategory = existing.category || '';
+      const predefinedCategories = ['Transport', 'Logistics', 'Rental', 'Warehouse', 'Courier'];
+      if (existingCategory && !predefinedCategories.includes(existingCategory)) {
+        setCustomCategories([existingCategory]);
+        setCategory(existingCategory);
+      } else {
+        setCategory(existingCategory);
+      }
       setSpecifications(existing.specifications || '');
       setDesignation(existing.designation || '');
       setStatus(existing.status || 'Active');
@@ -89,12 +103,8 @@ const VendorCreate = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Name *</label>
+              <label className="block text-sm font-medium text-slate-700">Organization Name *</label>
               <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full border rounded-md p-2" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Company</label>
-              <input value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -133,13 +143,43 @@ const VendorCreate = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1 block w-full border rounded-md p-2">
+                <select 
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)} 
+                  className="mt-1 block w-full border rounded-md p-2"
+                >
                   <option value="">Select Category</option>
                   <option value="Transport">Transport</option>
                   <option value="Logistics">Logistics</option>
                   <option value="Rental">Rental</option>
-                  <option value="Other">Other</option>
+                  <option value="Warehouse">Warehouse</option>
+                  <option value="Courier">Courier</option>
+                  {customCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
+                <div className="mt-2 flex gap-2">
+                  <input 
+                    value={customCategory} 
+                    onChange={(e) => setCustomCategory(e.target.value)} 
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomCategory();
+                      }
+                    }}
+                    className="flex-1 block w-full border rounded-md p-2" 
+                    placeholder="Add custom category"
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleAddCustomCategory}
+                    disabled={!customCategory.trim()}
+                    className="bg-green-600 hover:bg-green-700 px-4"
+                  >
+                    Add
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700">Status</label>

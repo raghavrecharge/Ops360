@@ -131,7 +131,7 @@ class PaymentRepository:
         result = await self.db.execute(
             select(
                 Vendor.id,
-                Vendor.company,
+                Vendor.name,
                 func.count(Payment.id).label('payment_count'),
                 func.sum(Payment.amount).label('total_amount'),
                 func.sum(
@@ -149,7 +149,7 @@ class PaymentRepository:
             )
             .join(Payment, Payment.vendor_id == Vendor.id)
             .where(Payment.is_active == True, Vendor.is_active == True)
-            .group_by(Vendor.id, Vendor.company)
+            .group_by(Vendor.id, Vendor.name)
         )
         return result.all()
     

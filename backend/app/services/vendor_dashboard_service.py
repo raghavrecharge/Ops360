@@ -68,12 +68,16 @@ class VendorDashboardService:
         if target_vendor_id:
             # Get unique campaign IDs from invoices
             campaign_ids = list(set([inv.campaign_id for inv in invoices if inv.campaign_id]))
+            print(f"DEBUG: Vendor {target_vendor_id} has {len(campaign_ids)} unique campaign IDs from {len(invoices)} invoices: {campaign_ids}")
             for cid in campaign_ids:
                 if cid:
                     camp = await self.campaign_repo.get_by_id(self.db, cid)
                     if camp:
+                        print(f"DEBUG: Loaded campaign {cid}: {camp.name}, vendor_names={getattr(camp, 'vendor_names', [])}")
                         # Ensure all fields are populated (get_by_id already does this)
                         campaigns.append(camp)
+                    else:
+                        print(f"DEBUG: Campaign {cid} not found or is inactive")
         else:
             # Admin sees all campaigns with vendor names
             campaigns = await self.campaign_repo.get_all(self.db)

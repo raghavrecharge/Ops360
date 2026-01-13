@@ -37,6 +37,17 @@ const DriverDetails = () => {
           <div><strong>Email:</strong> {driver.email || '-'}</div>
           <div><strong>License No:</strong> {driver.license_number || '-'}</div>
           <div><strong>License Validity:</strong> {driver.license_validity ? formatDate(driver.license_validity) : '-'}</div>
+          {driver.license_image && (
+            <div className="my-2">
+              <strong>License Image:</strong><br />
+              <img
+                src={`${process.env.REACT_APP_BACKEND_URL}${driver.license_image}`}
+                alt="License"
+                className="mt-1 rounded border max-w-xs max-h-48 shadow"
+                style={{objectFit: 'contain'}}
+              />
+            </div>
+          )}
           <div><strong>Vendor:</strong> {driver.vendor?.name || driver.vendor_name || '-'}</div>
           <div><strong>Assigned Vehicle:</strong> <span className="text-indigo-600 font-medium">{driver.vehicle?.vehicle_number || driver.vehicle_number || 'Not Assigned'}</span></div>
           <div className="text-sm text-slate-500 mt-3">Created: {formatDate(driver.created_at)}</div>

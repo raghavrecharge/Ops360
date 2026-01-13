@@ -254,7 +254,7 @@ const Accounts = () => {
                     {invoicesData.map((invoice) => (
                       <tr key={invoice.id} className="border-b hover:bg-slate-50">
                         <td className="p-2 font-medium">{invoice.invoice_number}</td>
-                        <td className="p-2">{invoice.vendor?.company || 'N/A'}</td>
+                        <td className="p-2">{invoice.vendor?.name || invoice.vendor?.id || 'N/A'}</td>
                         <td className="p-2">{new Date(invoice.invoice_date).toLocaleDateString('en-IN')}</td>
                         <td className="p-2 text-right font-semibold">₹{invoice.amount?.toLocaleString('en-IN')}</td>
                         <td className="p-2 text-center">

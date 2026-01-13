@@ -35,7 +35,7 @@ const ReportCreate = () => {
     setFetchingGps(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:8001/api/v1/daily-km-logs?campaign_id=${campaignId}`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/v1/daily-km-logs?campaign_id=${campaignId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const logs = response.data;
@@ -138,7 +138,7 @@ const ReportCreate = () => {
         
         try {
           const uploadResponse = await axios.post(
-            'http://localhost:8001/api/v1/upload/report-photo',
+            `${process.env.REACT_APP_BACKEND_URL}/api/v1/upload/report-photo`,
             formData,
             {
               headers: { 

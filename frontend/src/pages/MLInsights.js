@@ -29,9 +29,16 @@ const MLInsights = () => {
 
   useEffect(() => {
     if (error) {
+      console.error('ML Insights error:', error);
       toast.error('Failed to load ML insights');
     }
   }, [error]);
+
+  useEffect(() => {
+    if (dashboardData) {
+      console.log('Dashboard data loaded:', dashboardData);
+    }
+  }, [dashboardData]);
 
   const handleRefresh = () => {
     toast.loading('Refreshing insights...', { id: 'refresh' });

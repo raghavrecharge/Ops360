@@ -11,6 +11,7 @@ class Driver(Base, BaseModel):
     email = Column(String(255))
     license_number = Column(String(100))
     license_validity = Column(Date)
+    license_image = Column(String(255))
     vendor_id = Column(Integer, ForeignKey("vendors.id", ondelete="SET NULL"))
     vehicle_id = Column(Integer, ForeignKey("vehicles.id", ondelete="SET NULL"))  # Assigned vehicle
     

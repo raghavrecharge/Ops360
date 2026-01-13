@@ -309,8 +309,8 @@ const ReportDetails = () => {
                   report.photos_url.startsWith('http') 
                     ? report.photos_url 
                     : report.photos_url.startsWith('/uploads/') 
-                      ? `http://localhost:8001${report.photos_url}`
-                      : `http://localhost:8001/uploads/reports/${report.photos_url}`
+                      ? `${process.env.REACT_APP_BACKEND_URL}${report.photos_url}`
+                      : `${process.env.REACT_APP_BACKEND_URL}/uploads/reports/${report.photos_url}`
                 }
                 alt="Report Photo"
                 className="max-w-full h-auto rounded-lg shadow-md mb-2"

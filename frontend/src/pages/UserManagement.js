@@ -22,7 +22,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8001/api/v1/users', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -55,7 +55,7 @@ const UserManagement = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8001/api/v1/users/${selectedUser.id}/set-password`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/users/${selectedUser.id}/set-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -113,7 +113,7 @@ const ExpenseDetails = () => {
             </CardHeader>
             <CardContent>
               <img 
-                src={`http://localhost:8001${expense.bill_image}`} 
+                src={`${process.env.REACT_APP_BACKEND_URL}${expense.bill_image}`} 
                 alt="Bill" 
                 className="max-w-full h-auto rounded-lg shadow-md"
               />

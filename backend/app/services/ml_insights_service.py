@@ -83,6 +83,10 @@ class MLInsightsService:
                 f"drivers={len(drivers_data)}, vendors={len(vendors_data)}"
             )
             
+            # Log sample campaign data if available
+            if campaigns_data:
+                MLInsightsService.logger.info(f"First campaign sample: {campaigns_data[0]}")
+            
             # Send to ML service for analysis
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
@@ -98,12 +102,15 @@ class MLInsightsService:
                 
                 if response.status_code == 200:
                     result = response.json()
+                    MLInsightsService.logger.info(f"ML Service response: {str(result)[:500]}")
                     return result.get("dashboard", {})
                 else:
+                    MLInsightsService.logger.error(f"ML service returned status {response.status_code}: {response.text[:200]}")
                     raise Exception(f"ML service returned status {response.status_code}")
         
         except Exception as e:
             # Return error-safe fallback
+            MLInsightsService.logger.error(f"Error in get_dashboard_insights: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -376,7 +383,7 @@ class MLInsightsService:
             vendors_data.append({
                 "id": vendor.id,
                 "name": vendor.name,
-                "vendor_type": vendor.company or "general",  # Use company as type
+                "vendor_type": "general",  # Vendor doesn't have a company field
                 "total_bookings": 20,     # Placeholder
                 "completed_bookings": 18,  # Placeholder
                 "avg_delivery_time": 3.5,  # Placeholder (days)

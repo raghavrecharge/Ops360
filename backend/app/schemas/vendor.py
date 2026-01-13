@@ -4,7 +4,6 @@ from datetime import datetime
 
 class VendorBase(BaseModel):
     name: str
-    company: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None
@@ -23,7 +22,6 @@ class VendorCreate(VendorBase):
 
 class VendorUpdate(BaseModel):
     name: Optional[str] = None
-    company: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None

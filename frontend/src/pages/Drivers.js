@@ -79,6 +79,11 @@ const Drivers = () => {
                   <span className="font-medium text-indigo-600">
                     {driver.vehicle?.vehicle_number || driver.vehicle_number || 'Not Assigned'}
                   </span>
+                  {driver.license_image && (
+                    <>
+                      
+                    </>
+                  )}
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" className="flex-1" onClick={() => navigate(`/drivers/${driver.id}`)}>View Details</Button>

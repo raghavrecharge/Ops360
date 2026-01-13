@@ -182,7 +182,7 @@ const CampaignCreate = () => {
                         className="w-4 h-4 text-indigo-600 rounded"
                       />
                       <span className="text-sm">
-                        {vendor.name} {vendor.company && `(${vendor.company})`}
+                        {vendor.name} {vendor.name ? '' : vendor.id}
                       </span>
                     </label>
                   ))
