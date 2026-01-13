@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
 from pathlib import Path
 import shutil
 from datetime import datetime
@@ -47,7 +47,7 @@ async def upload_report_photo(
 @router.post("/vehicle-document")
 async def upload_vehicle_document(
     file: UploadFile = File(...),
-    document_type: str = None,
+    document_type: str = Form(None),
     current_user: dict = Depends(get_current_active_user)
 ):
     """Upload a vehicle document (RC or Insurance)"""

@@ -59,12 +59,23 @@ const Vendors = () => {
           vendors?.map((vendor) => (
             <Card key={vendor.id} data-testid="vendor-card">
               <CardHeader>
-                <h3 className="font-bold text-lg">{vendor.name}</h3>
-                <p className="text-sm text-slate-600">{vendor.company}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-lg">{vendor.name}</h3>
+                    <p className="text-sm text-slate-600">{vendor.company}</p>
+                  </div>
+                  {vendor.status && (
+                    <span className={`px-2 py-1 rounded text-xs ${vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {vendor.status}
+                    </span>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-sm text-slate-600">{vendor.email}</p>
                 <p className="text-sm text-slate-600">{vendor.phone}</p>
+                {vendor.city && <p className="text-sm text-slate-600">📍 {vendor.city}</p>}
+                {vendor.category && <p className="text-xs text-slate-500">Category: {vendor.category}</p>}
                 <p className="text-xs text-slate-500">Added: {formatDate(vendor.created_at)}</p>
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" className="flex-1" onClick={() => navigate(`/vendors/${vendor.id}`)}>View Details</Button>

@@ -156,6 +156,10 @@ class VehicleResponse(BaseResponse):
     permit_validity: Optional[date]
     is_active: bool
     created_at: datetime
+    vendor: Optional['VendorResponse'] = None
+    
+    class Config:
+        from_attributes = True
 
 class DriverCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -173,8 +177,14 @@ class DriverResponse(BaseResponse):
     license_number: Optional[str]
     license_validity: Optional[date]
     vendor_id: Optional[int]
+    vehicle_id: Optional[int]
     is_active: bool
     created_at: datetime
+    vehicle: Optional[VehicleResponse] = None
+    vendor: Optional['VendorResponse'] = None
+    
+    class Config:
+        from_attributes = True
 
 class DashboardStats(BaseModel):
     active_projects: int
@@ -682,16 +692,22 @@ async def create_vehicle(vehicle_data: VehicleCreate, db: AsyncSession = Depends
 async def get_vehicles(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """List all active vehicles with pagination"""
-    result = await db.execute(
-        select(Vehicle).where(Vehicle.is_active == True)
-        .offset(skip).limit(limit)
+    query = select(Vehicle).where(Vehicle.is_active == True).options(
+        selectinload(Vehicle.vendor)
     )
+    
+    # Vendor users can only see their own vehicles
+    if current_user.role == 'vendor':
+        query = query.where(Vehicle.vendor_id == current_user.vendor_id)
+    
+    result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()
 
-@api_router.get("/vehicles/{vehicle_id}", response_model=VehicleResponse)
+@api_router.get("/vehicles/{vehicle_id}")
 async def get_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db)):
     """Get vehicle details"""
     result = await db.execute(
@@ -702,7 +718,40 @@ async def get_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db)):
     
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    return vehicle
+    
+    # Debug
+    logger.info(f"Vehicle {vehicle.id}: vendor_id={vehicle.vendor_id}")
+    logger.info(f"Vehicle vendor object: {vehicle.vendor}")
+    
+    # Manually serialize to include relationships
+    vendor_data = None
+    if vehicle.vendor:
+        vendor_data = {
+            "id": vehicle.vendor.id,
+            "name": vehicle.vendor.name
+        }
+        logger.info(f"Vendor name: {vehicle.vendor.name}")
+    else:
+        logger.warning(f"Vendor is None for vehicle {vehicle.id} with vendor_id {vehicle.vendor_id}")
+    
+    vehicle_dict = {
+        "id": vehicle.id,
+        "vehicle_number": vehicle.vehicle_number,
+        "vehicle_type": vehicle.vehicle_type,
+        "capacity": vehicle.capacity,
+        "vendor_id": vehicle.vendor_id,
+        "rc_validity": vehicle.rc_validity,
+        "insurance_validity": vehicle.insurance_validity,
+        "permit_validity": vehicle.permit_validity,
+        "rc_image": vehicle.rc_image if hasattr(vehicle, 'rc_image') else None,
+        "insurance_image": vehicle.insurance_image if hasattr(vehicle, 'insurance_image') else None,
+        "is_active": vehicle.is_active,
+        "created_at": vehicle.created_at,
+        "vendor": vendor_data
+    }
+    
+    logger.info(f"Returning vehicle_dict with vendor: {vendor_data}")
+    return vehicle_dict
 
 # ============== Driver Routes ==============
 
@@ -721,21 +770,59 @@ async def create_driver(driver_data: DriverCreate, db: AsyncSession = Depends(ge
 async def get_drivers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """List all active drivers with pagination"""
-    result = await db.execute(
-        select(Driver).where(Driver.is_active == True)
-        .offset(skip).limit(limit)
+    query = select(Driver).where(Driver.is_active == True).options(
+        selectinload(Driver.vehicle),
+        selectinload(Driver.vendor)
     )
-    return result.scalars().all()
+    
+    # Vendor users can only see their own drivers
+    if current_user.role == 'vendor':
+        query = query.where(Driver.vendor_id == current_user.vendor_id)
+    
+    result = await db.execute(query.offset(skip).limit(limit))
+    drivers = result.scalars().all()
+    
+    # Manually serialize to include relationships
+    drivers_list = []
+    for driver in drivers:
+        driver_dict = {
+            "id": driver.id,
+            "name": driver.name,
+            "phone": driver.phone,
+            "email": driver.email,
+            "license_number": driver.license_number,
+            "license_validity": driver.license_validity,
+            "vendor_id": driver.vendor_id,
+            "vehicle_id": driver.vehicle_id,
+            "is_active": driver.is_active,
+            "created_at": driver.created_at,
+            "vehicle": {
+                "id": driver.vehicle.id,
+                "vehicle_number": driver.vehicle.vehicle_number,
+                "vehicle_type": driver.vehicle.vehicle_type
+            } if driver.vehicle else None,
+            "vendor": {
+                "id": driver.vendor.id,
+                "name": driver.vendor.name
+            } if driver.vendor else None
+        }
+        drivers_list.append(driver_dict)
+    
+    return drivers_list
 
 @api_router.get("/drivers/{driver_id}", response_model=DriverResponse)
 async def get_driver(driver_id: int, db: AsyncSession = Depends(get_db)):
     """Get driver details"""
     result = await db.execute(
         select(Driver).where(Driver.id == driver_id)
-        .options(selectinload(Driver.vendor))
+        .options(
+            selectinload(Driver.vendor),
+            selectinload(Driver.vehicle)
+        )
     )
     driver = result.scalar_one_or_none()
     

@@ -81,6 +81,7 @@ export const vendorsAPI = {
 export const vehiclesAPI = {
   getAll: () => api.get('/vehicles'),
   getOne: (id) => api.get(`/vehicles/${id}`),
+  
   create: (data) => api.post('/vehicles', data),
   update: (id, data) => api.put(`/vehicles/${id}`, data),
   delete: (id) => api.delete(`/vehicles/${id}`),
@@ -156,6 +157,7 @@ export const reportsAPI = {
 
 export const vendorDashboardAPI = {
   getDashboard: (vendorId) => api.get('/vendor-dashboard', { params: { vendor_id: vendorId } }),
+  getMenuCounts: () => api.get('/vendor-dashboard/menu-counts').then(res => res.data),
 };
 
 export const invoicesAPI = {
