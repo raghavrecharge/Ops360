@@ -1,13 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 from dotenv import load_dotenv
 
-from app.embeddings.encoder import EmbeddingEncoder
-from app.vector_store.faiss_index import FAISSIndex
-from app.rag.retriever import RAGRetriever
+# Only import analytics engine for now (RAG components not needed yet)
+from app.analytics.insights_engine import InsightsEngine
 
 load_dotenv()
 
@@ -22,9 +21,7 @@ app.add_middleware(
 )
 
 # Initialize components
-encoder = EmbeddingEncoder()
-faiss_index = FAISSIndex()
-rag_retriever = RAGRetriever(encoder, faiss_index)
+insights_engine = InsightsEngine()
 
 class DocumentInput(BaseModel):
     content: str
@@ -95,6 +92,95 @@ async def get_stats():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "ml-rag-service"}
+# ============================================================
+# ANALYTICS & INSIGHTS ENDPOINTS (Admin-only via backend)
+# ============================================================
+
+class AnalyticsRequest(BaseModel):
+    campaigns: List[Dict[str, Any]] = []
+    expenses: List[Dict[str, Any]] = []
+    vehicles: List[Dict[str, Any]] = []
+    drivers: List[Dict[str, Any]] = []
+    vendors: List[Dict[str, Any]] = []
+
+@app.post("/analytics/campaign-insights")
+async def get_campaign_insights(request: AnalyticsRequest):
+    """Analyze campaign performance and provide insights"""
+    try:
+        insights = await insights_engine.analyze_campaign_performance(request.campaigns)
+        return {
+            "success": True,
+            "insights": [insight.model_dump() for insight in insights]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing campaigns: {str(e)}")
+
+@app.post("/analytics/expense-anomalies")
+async def detect_expense_anomalies(request: AnalyticsRequest):
+    """Detect anomalous expenses"""
+    try:
+        anomalies = await insights_engine.detect_expense_anomalies(request.expenses)
+        return {
+            "success": True,
+            "anomalies": [anomaly.model_dump() for anomaly in anomalies]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting anomalies: {str(e)}")
+
+@app.post("/analytics/vehicle-utilization")
+async def get_vehicle_utilization(request: AnalyticsRequest):
+    """Analyze vehicle utilization"""
+    try:
+        utilization = await insights_engine.analyze_utilization(request.vehicles, "vehicle")
+        return {
+            "success": True,
+            "utilization": [u.model_dump() for u in utilization]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing utilization: {str(e)}")
+
+@app.post("/analytics/driver-utilization")
+async def get_driver_utilization(request: AnalyticsRequest):
+    """Analyze driver utilization"""
+    try:
+        utilization = await insights_engine.analyze_utilization(request.drivers, "driver")
+        return {
+            "success": True,
+            "utilization": [u.model_dump() for u in utilization]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing utilization: {str(e)}")
+
+@app.post("/analytics/vendor-performance")
+async def get_vendor_performance(request: AnalyticsRequest):
+    """Analyze vendor performance"""
+    try:
+        performance = await insights_engine.analyze_vendor_performance(request.vendors)
+        return {
+            "success": True,
+            "performance": [p.model_dump() for p in performance]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing vendor performance: {str(e)}")
+
+@app.post("/analytics/dashboard")
+async def get_analytics_dashboard(request: AnalyticsRequest):
+    """Generate comprehensive analytics dashboard"""
+    try:
+        dashboard = await insights_engine.generate_summary_dashboard(
+            campaigns=request.campaigns,
+            expenses=request.expenses,
+            vehicles=request.vehicles,
+            drivers=request.drivers,
+            vendors=request.vendors
+        )
+        return {
+            "success": True,
+            "dashboard": dashboard
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating dashboard: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

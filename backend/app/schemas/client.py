@@ -1,6 +1,14 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+class ProjectBrief(BaseModel):
+    id: int
+    name: str
+    status: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
 
 class ClientBase(BaseModel):
     name: str
@@ -25,6 +33,7 @@ class ClientResponse(ClientBase):
     id: int
     is_active: bool
     created_at: datetime
+    projects: List[ProjectBrief] = []
     
     class Config:
         from_attributes = True

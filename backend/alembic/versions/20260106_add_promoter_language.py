@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20260106_add_promoter_language'
-down_revision = None
+down_revision = '20260106_add_rbac_tables'
 branch_labels = None
 depends_on = None
 

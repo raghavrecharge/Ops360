@@ -10,6 +10,7 @@ const PromoterCreate = () => {
   const { id } = useParams();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [language, setLanguage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +19,7 @@ const PromoterCreate = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { name, phone, specialty, language };
+      const payload = { name, phone, email, specialty, language };
       if (id) {
         await promotersAPI.update(id, payload);
       } else {
@@ -42,6 +43,7 @@ const PromoterCreate = () => {
     if (existing) {
       setName(existing.name || '');
       setPhone(existing.phone || '');
+      setEmail(existing.email || '');
       setSpecialty(existing.specialty || '');
       setLanguage(existing.language || '');
     }
@@ -61,9 +63,10 @@ const PromoterCreate = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className="mt-1 block w-full border rounded-md p-2" />
-              <input value={specialty} onChange={(e) => setSpecialty(e.target.value)} placeholder="Specialty" className="mt-1 block w-full border rounded-md p-2" />
+              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" className="mt-1 block w-full border rounded-md p-2" />
             </div>
-            <div>
+            <div className="grid grid-cols-2 gap-4">
+              <input value={specialty} onChange={(e) => setSpecialty(e.target.value)} placeholder="Specialty" className="mt-1 block w-full border rounded-md p-2" />
               <input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="Language" className="mt-1 block w-full border rounded-md p-2" />
             </div>
             <div className="flex gap-2">

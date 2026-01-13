@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Plus, FileText, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Reports = () => {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const { data: reports, isLoading } = useQuery({
     queryKey: ['reports'],
     queryFn: () => reportsAPI.getAll().then(res => res.data),
@@ -21,9 +23,11 @@ const Reports = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Reports</h1>
           <p className="text-slate-600">Daily execution reports and analytics</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="create-report-btn" onClick={() => navigate('/reports/new')}>
-          <Plus className="mr-2 h-4 w-4" /> Create Report
-        </Button>
+        {hasPermission('report.create') && (
+          <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="create-report-btn" onClick={() => navigate('/reports/new')}>
+            <Plus className="mr-2 h-4 w-4" /> Create Report
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -48,7 +52,9 @@ const Reports = () => {
                       <FileText className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <h4 className="font-semibold">Campaign {report.campaign_id} Report</h4>
+                      <h4 className="font-semibold">
+                        {report.campaign?.name || `Campaign ${report.campaign_id}`} Report
+                      </h4>
                       <p className="text-sm text-slate-600">
                         {formatDate(report.report_date)} • {report.km_travelled || 0} KM travelled
                       </p>

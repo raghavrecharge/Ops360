@@ -1,18 +1,40 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { driversAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, UserCircle } from 'lucide-react';
+import { Plus, UserCircle, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/lib/utils';
+import { toast } from 'react-hot-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Drivers = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
+  
   const { data: drivers, isLoading } = useQuery({
     queryKey: ['drivers'],
     queryFn: () => driversAPI.getAll().then(res => res.data),
   });
-  const navigate = useNavigate();
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => driversAPI.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['drivers']);
+      toast.success('Driver deleted successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete driver');
+    },
+  });
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   return (
     <div data-testid="drivers-page">
@@ -21,9 +43,11 @@ const Drivers = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Drivers</h1>
           <p className="text-slate-600">Manage driver information</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-driver-btn" onClick={() => navigate('/drivers/new')}>
-          <Plus className="mr-2 h-4 w-4" /> Add Driver
-        </Button>
+        {hasPermission('driver.create') && (
+          <Button className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-driver-btn" onClick={() => navigate('/drivers/new')}>
+            <Plus className="mr-2 h-4 w-4" /> Add Driver
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,8 +75,29 @@ const Drivers = () => {
                   <span className="font-medium">{driver.license_number || 'N/A'}</span>
                   <span className="text-slate-600">Valid Until:</span>
                   <span className="font-medium">{formatDate(driver.license_validity)}</span>
+                  <span className="text-slate-600">Vehicle:</span>
+                  <span className="font-medium text-indigo-600">
+                    {driver.vehicle?.vehicle_number || driver.vehicle_number || 'Not Assigned'}
+                  </span>
+                  {driver.license_image && (
+                    <>
+                      
+                    </>
+                  )}
                 </div>
-                <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/drivers/${driver.id}`)}>View Details</Button>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => navigate(`/drivers/${driver.id}`)}>View Details</Button>
+                  {hasPermission('driver.delete') && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(driver.id, driver.name)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))

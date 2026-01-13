@@ -36,3 +36,4 @@ class Campaign(Base, BaseModel):
     project = relationship("Project", back_populates="campaigns")
     expenses = relationship("Expense", back_populates="campaign", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="campaign", cascade="all, delete-orphan")
+    invoices = relationship("Invoice", back_populates="campaign", cascade="all, delete-orphan")

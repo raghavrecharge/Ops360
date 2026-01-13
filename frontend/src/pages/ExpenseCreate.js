@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { expensesAPI, campaignsAPI, driversAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 
 const ExpenseCreate = () => {
   const navigate = useNavigate();
@@ -23,24 +24,38 @@ const ExpenseCreate = () => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [billUrl, setBillUrl] = useState('');
+  const [billImage, setBillImage] = useState(null);
   const [submittedDate, setSubmittedDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    
     try {
-      const payload = { campaign_id: campaignId ? parseInt(campaignId,10) : null, driver_id: driverId ? parseInt(driverId,10) : null, expense_type: expenseType, amount: parseFloat(amount), description, bill_url: billUrl, submitted_date: submittedDate || null };
+      const formData = new FormData();
+      formData.append('expense_type', expenseType);
+      formData.append('amount', amount);
+      if (campaignId) formData.append('campaign_id', campaignId);
+      if (driverId) formData.append('driver_id', driverId);
+      if (description) formData.append('description', description);
+      if (billUrl) formData.append('bill_url', billUrl);
+      if (submittedDate) formData.append('submitted_date', submittedDate);
+      if (billImage) formData.append('bill_image', billImage);
+
       if (id) {
-        await expensesAPI.update(id, payload);
+        await expensesAPI.update(id, formData);
+        toast.success('Expense updated successfully!');
       } else {
-        await expensesAPI.create(payload);
+        await expensesAPI.create(formData);
+        toast.success('Expense submitted successfully!');
       }
       navigate('/expenses');
     } catch (err) {
-      console.error(err);
+      console.error('Expense submission error:', err);
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to submit expense';
+      toast.error(errorMsg);
       setSubmitting(false);
-      alert('Failed to submit expense');
     }
   };
 
@@ -97,7 +112,19 @@ const ExpenseCreate = () => {
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Bill URL</label>
+              <label className="block text-sm font-medium text-slate-700">Bill Image</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => setBillImage(e.target.files[0])} 
+                className="mt-1 block w-full border rounded-md p-2" 
+              />
+              {billImage && (
+                <p className="text-sm text-slate-600 mt-1">Selected: {billImage.name}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Bill URL (optional)</label>
               <input value={billUrl} onChange={(e) => setBillUrl(e.target.value)} className="mt-1 block w-full border rounded-md p-2" />
             </div>
             <div>

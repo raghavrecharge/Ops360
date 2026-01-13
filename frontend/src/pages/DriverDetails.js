@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { driversAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const DriverDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const { data: driver, isLoading } = useQuery({
     queryKey: ['driver', id],
     queryFn: () => driversAPI.getOne(id).then(res => res.data),
@@ -21,7 +23,9 @@ const DriverDetails = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{driver.name}</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate(`/drivers/${id}/edit`)}>Edit</Button>
+          {hasPermission('driver.update') && (
+            <Button onClick={() => navigate(`/drivers/${id}/edit`)}>Edit</Button>
+          )}
           <Button variant="ghost" onClick={() => navigate('/drivers')}>Back</Button>
         </div>
       </div>
@@ -33,9 +37,19 @@ const DriverDetails = () => {
           <div><strong>Email:</strong> {driver.email || '-'}</div>
           <div><strong>License No:</strong> {driver.license_number || '-'}</div>
           <div><strong>License Validity:</strong> {driver.license_validity ? formatDate(driver.license_validity) : '-'}</div>
-          <div><strong>Vendor:</strong> {driver.vendor ? (
-            <Button variant="link" onClick={() => navigate(`/vendors/${driver.vendor.id}`)}>{driver.vendor.name}</Button>
-          ) : '-'}</div>
+          {driver.license_image && (
+            <div className="my-2">
+              <strong>License Image:</strong><br />
+              <img
+                src={`${process.env.REACT_APP_BACKEND_URL}${driver.license_image}`}
+                alt="License"
+                className="mt-1 rounded border max-w-xs max-h-48 shadow"
+                style={{objectFit: 'contain'}}
+              />
+            </div>
+          )}
+          <div><strong>Vendor:</strong> {driver.vendor?.name || driver.vendor_name || '-'}</div>
+          <div><strong>Assigned Vehicle:</strong> <span className="text-indigo-600 font-medium">{driver.vehicle?.vehicle_number || driver.vehicle_number || 'Not Assigned'}</span></div>
           <div className="text-sm text-slate-500 mt-3">Created: {formatDate(driver.created_at)}</div>
         </div>
       </div>

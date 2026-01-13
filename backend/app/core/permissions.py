@@ -3,12 +3,23 @@ from fastapi import HTTPException, status, Depends
 from app.core.security import get_current_user
 
 class UserRole(str, Enum):
+    # Existing roles (DO NOT MODIFY)
     ADMIN = "admin"
     CLIENT_SERVICING = "client_servicing"
     OPERATIONS_MANAGER = "operations_manager"
     ACCOUNTS = "accounts"
     VENDOR = "vendor"
     CLIENT = "client"
+    
+    # New roles (Extension)
+    SALES = "sales"
+    PURCHASE = "purchase"
+    OPERATOR = "operator"
+    DRIVER = "driver"
+    PROMOTER = "promoter"
+    ANCHOR = "anchor"
+    VEHICLE_MANAGER = "vehicle_manager"
+    GODOWN_MANAGER = "godown_manager"
 
 class Permission:
     """Role-based permission checker"""

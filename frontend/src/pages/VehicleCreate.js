@@ -4,29 +4,106 @@ import { useQuery } from '@tanstack/react-query';
 import { vehiclesAPI, vendorsAPI } from '@/lib/api';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 const VehicleCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isVendor = user.role === 'vendor';
+  
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
     queryKey: ['vendors'],
     queryFn: () => vendorsAPI.getAll().then(res => res.data),
+    enabled: !isVendor, // Only load vendors if not a vendor user
   });
 
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [vendorId, setVendorId] = useState('');
+  const [vendorId, setVendorId] = useState(isVendor ? user.vendor_id : '');
   const [rcValidity, setRcValidity] = useState('');
   const [insuranceValidity, setInsuranceValidity] = useState('');
   const [permitValidity, setPermitValidity] = useState('');
+  const [rcImageFile, setRcImageFile] = useState(null);
+  const [insuranceImageFile, setInsuranceImageFile] = useState(null);
+  const [rcImageUrl, setRcImageUrl] = useState('');
+  const [insuranceImageUrl, setInsuranceImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { vehicle_number: vehicleNumber, vehicle_type: vehicleType, capacity, vendor_id: vendorId ? parseInt(vendorId,10) : null, rc_validity: rcValidity || null, insurance_validity: insuranceValidity || null, permit_validity: permitValidity || null };
+      let uploadedRcUrl = rcImageUrl;
+      let uploadedInsuranceUrl = insuranceImageUrl;
+
+      // Upload RC image if selected
+      if (rcImageFile) {
+        const formData = new FormData();
+        formData.append('file', rcImageFile);
+        formData.append('document_type', 'rc');
+        const token = localStorage.getItem('token');
+        
+        try {
+          const uploadResponse = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/api/v1/upload/vehicle-document`,
+            formData,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+          uploadedRcUrl = uploadResponse.data.url;
+        } catch (uploadErr) {
+          console.error('RC image upload failed:', uploadErr);
+          alert('Failed to upload RC image: ' + (uploadErr.response?.data?.detail || uploadErr.message));
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      // Upload Insurance image if selected
+      if (insuranceImageFile) {
+        const formData = new FormData();
+        formData.append('file', insuranceImageFile);
+        formData.append('document_type', 'insurance');
+        const token = localStorage.getItem('token');
+        
+        try {
+          const uploadResponse = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/api/v1/upload/vehicle-document`,
+            formData,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+          uploadedInsuranceUrl = uploadResponse.data.url;
+        } catch (uploadErr) {
+          console.error('Insurance image upload failed:', uploadErr);
+          alert('Failed to upload insurance image: ' + (uploadErr.response?.data?.detail || uploadErr.message));
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const payload = { 
+        vehicle_number: vehicleNumber, 
+        vehicle_type: vehicleType, 
+        capacity, 
+        vendor_id: vendorId ? parseInt(vendorId,10) : null, 
+        rc_validity: rcValidity || null, 
+        insurance_validity: insuranceValidity || null, 
+        permit_validity: permitValidity || null,
+        rc_image: uploadedRcUrl || null,
+        insurance_image: uploadedInsuranceUrl || null
+      };
+      
       if (id) {
         await vehiclesAPI.update(id, payload);
       } else {
@@ -55,6 +132,8 @@ const VehicleCreate = () => {
       setRcValidity(existing.rc_validity || '');
       setInsuranceValidity(existing.insurance_validity || '');
       setPermitValidity(existing.permit_validity || '');
+      setRcImageUrl(existing.rc_image || '');
+      setInsuranceImageUrl(existing.insurance_image || '');
     }
   }, [existing]);
 
@@ -108,7 +187,8 @@ const VehicleCreate = () => {
     />
   </div>
 
-  {/* Vendor */}
+  {/* Vendor - Hide for vendor users */}
+  {!isVendor && (
   <div>
     <label className="block text-sm font-medium text-slate-700">
       Vendor
@@ -128,6 +208,7 @@ const VehicleCreate = () => {
       ))}
     </select>
   </div>
+  )}
 
   {/* Validity Dates */}
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -165,6 +246,53 @@ const VehicleCreate = () => {
         onChange={(e) => setPermitValidity(e.target.value)}
         className="mt-1 block w-full border border-slate-300 rounded-md p-2"
       />
+    </div>
+  </div>
+
+  {/* Document Images */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        RC Document Image <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setRcImageFile(e.target.files[0])}
+        className="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm"
+      />
+      {rcImageUrl && !rcImageFile && (
+        <div className="mt-2 text-sm text-slate-600">
+          Current: {rcImageUrl.split('/').pop()}
+        </div>
+      )}
+      {rcImageFile && (
+        <div className="mt-2 text-sm text-green-600">
+          Selected: {rcImageFile.name}
+        </div>
+      )}
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Insurance Document Image <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setInsuranceImageFile(e.target.files[0])}
+        className="mt-1 block w-full border border-slate-300 rounded-md p-2 text-sm"
+      />
+      {insuranceImageUrl && !insuranceImageFile && (
+        <div className="mt-2 text-sm text-slate-600">
+          Current: {insuranceImageUrl.split('/').pop()}
+        </div>
+      )}
+      {insuranceImageFile && (
+        <div className="mt-2 text-sm text-green-600">
+          Selected: {insuranceImageFile.name}
+        </div>
+      )}
     </div>
   </div>
 

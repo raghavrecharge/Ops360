@@ -86,7 +86,7 @@ const ClientCreate = () => {
               <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
                 {loading ? 'Saving...' : id ? 'Update Client' : 'Create Client'}
               </Button>
-              <Button variant="ghost" onClick={() => navigate('/clients')}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={() => navigate('/clients')}>Cancel</Button>
             </div>
           </form>
         </CardContent>

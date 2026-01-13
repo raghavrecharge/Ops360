@@ -2,6 +2,14 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 
+class CampaignBrief(BaseModel):
+    id: int
+    name: str
+    campaign_type: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
 class ReportBase(BaseModel):
     campaign_id: int
     report_date: date
@@ -24,6 +32,7 @@ class ReportUpdate(BaseModel):
 class ReportResponse(ReportBase):
     id: int
     created_at: datetime
+    campaign: Optional[CampaignBrief] = None
     
     class Config:
         from_attributes = True

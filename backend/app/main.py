@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -9,7 +11,9 @@ from app.database.connection import init_db, close_db
 # Import API routers
 from app.api.v1 import (
     auth, dashboard, clients, projects, campaigns,
-    vendors, vehicles, drivers, promoters, expenses, reports
+    vendors, vehicles, drivers, promoters, expenses, reports, users, roles, promoter_activities,
+    vendor_dashboard, invoices, payments, client_servicing_dashboard, driver_dashboard, vendor_booking,
+    ml_insights, accounts, operations, analytics, upload
 )
 
 @asynccontextmanager
@@ -43,9 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files for uploads
+uploads_dir = Path("/app/backend/uploads")
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+else:
+    logger.warning(f"Uploads directory not found at {uploads_dir}")
+
 # Include API routers
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_V1_PREFIX)
+app.include_router(users.router, prefix=settings.API_V1_PREFIX)
+app.include_router(roles.router, prefix=settings.API_V1_PREFIX)
 app.include_router(clients.router, prefix=settings.API_V1_PREFIX)
 app.include_router(projects.router, prefix=settings.API_V1_PREFIX)
 app.include_router(campaigns.router, prefix=settings.API_V1_PREFIX)
@@ -53,8 +66,20 @@ app.include_router(vendors.router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles.router, prefix=settings.API_V1_PREFIX)
 app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
 app.include_router(promoters.router, prefix=settings.API_V1_PREFIX)
+app.include_router(promoter_activities.router, prefix=settings.API_V1_PREFIX)
 app.include_router(expenses.router, prefix=settings.API_V1_PREFIX)
 app.include_router(reports.router, prefix=settings.API_V1_PREFIX)
+app.include_router(vendor_dashboard.router, prefix=settings.API_V1_PREFIX)
+app.include_router(client_servicing_dashboard.router, prefix=settings.API_V1_PREFIX)
+app.include_router(driver_dashboard.router, prefix=settings.API_V1_PREFIX)
+app.include_router(vendor_booking.router, prefix=settings.API_V1_PREFIX)
+app.include_router(invoices.router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
+app.include_router(accounts.router, prefix=settings.API_V1_PREFIX)
+app.include_router(operations.router, prefix=settings.API_V1_PREFIX)
+app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
+app.include_router(ml_insights.router, prefix=settings.API_V1_PREFIX)
+app.include_router(upload.router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/health")
 async def health_check():
