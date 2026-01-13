@@ -5,6 +5,7 @@ import { vehiclesAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatDate } from '@/lib/utils';
+import { CloudCog } from 'lucide-react';
 
 const VehicleDetails = () => {
   const { id } = useParams();
@@ -12,8 +13,14 @@ const VehicleDetails = () => {
   const { hasPermission } = usePermissions();
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ['vehicle', id],
-    queryFn: () => vehiclesAPI.getOne(id).then(res => res.data),
+    queryFn: () => vehiclesAPI.getOne(id).then(res => {
+      console.log('Vehicle API Response:', res.data);
+      console.log('Vehicle vendor:', res.data.vendor);
+      console.log('Vehicle vendor_id:', res.data.vendor_id);
+      return res.data;
+    }),
   });
+  console.log('Vehicle Details Component:', { vehicle, isLoading });
 
   if (isLoading) return <div>Loading...</div>;
   if (!vehicle) return <div>Vehicle not found</div>;
@@ -35,9 +42,7 @@ const VehicleDetails = () => {
           <div><strong>Number:</strong> {vehicle.vehicle_number}</div>
           <div><strong>Type:</strong> {vehicle.vehicle_type || '-'}</div>
           <div><strong>Capacity:</strong> {vehicle.capacity || '-'}</div>
-          <div><strong>Vendor:</strong> {vehicle.vendor ? (
-            <Button variant="link" onClick={() => navigate(`/vendors/${vehicle.vendor.id}`)}>{vehicle.vendor.name}</Button>
-          ) : '-'}</div>
+          <div><strong>Vendor:</strong> {vehicle.vendor?.name || '-'}</div>
           <div><strong>RC Validity:</strong> {vehicle.rc_validity ? formatDate(vehicle.rc_validity) : '-'}</div>
           <div><strong>Insurance Validity:</strong> {vehicle.insurance_validity ? formatDate(vehicle.insurance_validity) : '-'}</div>
           <div><strong>Permit Validity:</strong> {vehicle.permit_validity ? formatDate(vehicle.permit_validity) : '-'}</div>

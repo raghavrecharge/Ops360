@@ -65,9 +65,21 @@ class DriverRepository(BaseRepository):
         query = select(Driver).where(
             Driver.vendor_id == vendor_id,
             Driver.is_active == True
+        ).options(
+            joinedload(Driver.vehicle),
+            joinedload(Driver.vendor)
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        drivers = result.scalars().unique().all()
+        
+        # Populate vehicle_number and vendor_name for display
+        for driver in drivers:
+            if driver.vehicle:
+                driver.vehicle_number = driver.vehicle.vehicle_number
+            if driver.vendor:
+                driver.vendor_name = driver.vendor.name
+        
+        return drivers
     
     def get_all_sync(self):
         """Get all active drivers (sync)"""

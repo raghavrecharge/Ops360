@@ -15,7 +15,7 @@ const allSidebarItems = [
   { path: '/driver-dashboard', icon: Truck, label: 'Driver Dashboard', menuKey: 'driver-dashboard' },
   { path: '/clients', icon: Users, label: 'Clients', menuKey: 'clients' },
   { path: '/projects', icon: Briefcase, label: 'Projects', menuKey: 'projects' },
-  { path: '/campaigns', icon: Megaphone, label: 'Campaigns', menuKey: 'campaigns' },
+  { path: '/campaigns', icon: Megaphone, label: 'Campaigns', menuKey: 'campaigns', excludeForRoles: ['vendor'] },
   { path: '/vendors', icon: Building2, label: 'Vendors', menuKey: 'vendors' },
   { path: '/vehicles', icon: Truck, label: 'Vehicles', menuKey: 'vehicles' },
   { path: '/drivers', icon: UserCircle, label: 'Drivers', menuKey: 'drivers' },
@@ -54,6 +54,11 @@ const Layout = () => {
     });
     
     return allSidebarItems.filter(item => {
+      // Check if role is excluded for this menu item
+      if (item.excludeForRoles && item.excludeForRoles.includes(user.role)) {
+        return false;
+      }
+      
       // Admin-only items - show if user is admin, skip permission check
       if (item.adminOnly) {
         return user.role === 'admin';

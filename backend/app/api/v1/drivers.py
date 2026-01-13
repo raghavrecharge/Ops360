@@ -26,9 +26,25 @@ async def get_drivers(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_permission(Permission.DRIVER_READ))
 ):
-    """Get all drivers"""
+    """Get all drivers (vendors see only their own)"""
     repo = DriverRepository()
-    drivers = await repo.get_active_drivers(db)
+    
+    # Check if user is vendor - filter by their vendor_id
+    user_role = current_user.get("role")
+    user_vendor_id = current_user.get("vendor_id")
+    
+    if user_role == "vendor":
+        # Vendor users see only their own drivers
+        if not user_vendor_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vendor user must be linked to a vendor"
+            )
+        drivers = await repo.get_by_vendor_async(db, user_vendor_id)
+    else:
+        # Admin and other roles see all drivers
+        drivers = await repo.get_active_drivers(db)
+    
     return [DriverResponse.model_validate(d) for d in drivers]
 
 @router.get("/{driver_id}", response_model=DriverResponse)

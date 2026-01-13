@@ -99,3 +99,21 @@ class VendorDashboardService:
             invoices=invoices,
             payments=payments
         )
+    
+    async def get_menu_counts(self, user) -> dict:
+        """Get vehicle and driver counts for dynamic menu visibility"""
+        target_vendor_id = self.get_vendor_id_from_user(user)
+        
+        if target_vendor_id:
+            vehicles = await self.vehicle_repo.get_by_vendor_async(self.db, target_vendor_id)
+            drivers = await self.driver_repo.get_by_vendor_async(self.db, target_vendor_id)
+        else:
+            # Admin sees all
+            vehicles = await self.vehicle_repo.get_active_vehicles(self.db)
+            drivers = await self.driver_repo.get_active_drivers(self.db)
+        
+        return {
+            "vehicle_count": len(vehicles),
+            "driver_count": len(drivers),
+            "campaign_count": 0  # Can add campaign count if needed
+        }

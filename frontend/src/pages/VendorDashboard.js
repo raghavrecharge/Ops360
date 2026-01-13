@@ -22,6 +22,11 @@ const VendorDashboard = () => {
     queryFn: () => vendorDashboardAPI.getDashboard().then(res => res.data),
   });
 
+  const { data: menuCounts } = useQuery({
+    queryKey: ['vendor-menu-counts'],
+    queryFn: () => vendorDashboardAPI.getMenuCounts(),
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,11 +123,11 @@ const VendorDashboard = () => {
 
       {/* Tabs for different sections */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-          <TabsTrigger value="drivers">Drivers</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns ({assigned_campaigns?.length || 0})</TabsTrigger>
+          <TabsTrigger value="vehicles">Vehicles ({vehicles?.length || 0})</TabsTrigger>
+          <TabsTrigger value="drivers">Drivers ({drivers?.length || 0})</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
@@ -365,6 +370,9 @@ const VendorDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+            {(!vehicles || vehicles.length === 0) && (
+              <p className="text-center text-slate-500 py-8">No vehicles yet. Add your first vehicle!</p>
+            )}
           </div>
         </TabsContent>
 
@@ -392,6 +400,9 @@ const VendorDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+            {(!drivers || drivers.length === 0) && (
+              <p className="text-center text-slate-500 py-8">No drivers yet. Add your first driver!</p>
+            )}
           </div>
         </TabsContent>
 

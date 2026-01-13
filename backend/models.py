@@ -130,11 +130,13 @@ class Driver(Base):
     license_number = Column(String(100))
     license_validity = Column(Date)
     vendor_id = Column(Integer, ForeignKey("vendors.id"))
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     vendor = relationship("Vendor", back_populates="drivers")
+    vehicle = relationship("Vehicle")
     campaigns = relationship("CampaignDriver", back_populates="driver")
     expenses = relationship("Expense", back_populates="driver")
 

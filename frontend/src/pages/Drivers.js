@@ -76,7 +76,9 @@ const Drivers = () => {
                   <span className="text-slate-600">Valid Until:</span>
                   <span className="font-medium">{formatDate(driver.license_validity)}</span>
                   <span className="text-slate-600">Vehicle:</span>
-                  <span className="font-medium text-indigo-600">{driver.vehicle_number || 'Not Assigned'}</span>
+                  <span className="font-medium text-indigo-600">
+                    {driver.vehicle?.vehicle_number || driver.vehicle_number || 'Not Assigned'}
+                  </span>
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" className="flex-1" onClick={() => navigate(`/drivers/${driver.id}`)}>View Details</Button>

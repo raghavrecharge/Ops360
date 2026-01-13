@@ -9,15 +9,19 @@ import axios from 'axios';
 const VehicleCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isVendor = user.role === 'vendor';
+  
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
     queryKey: ['vendors'],
     queryFn: () => vendorsAPI.getAll().then(res => res.data),
+    enabled: !isVendor, // Only load vendors if not a vendor user
   });
 
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [vendorId, setVendorId] = useState('');
+  const [vendorId, setVendorId] = useState(isVendor ? user.vendor_id : '');
   const [rcValidity, setRcValidity] = useState('');
   const [insuranceValidity, setInsuranceValidity] = useState('');
   const [permitValidity, setPermitValidity] = useState('');
@@ -183,7 +187,8 @@ const VehicleCreate = () => {
     />
   </div>
 
-  {/* Vendor */}
+  {/* Vendor - Hide for vendor users */}
+  {!isVendor && (
   <div>
     <label className="block text-sm font-medium text-slate-700">
       Vendor
@@ -203,6 +208,7 @@ const VehicleCreate = () => {
       ))}
     </select>
   </div>
+  )}
 
   {/* Validity Dates */}
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

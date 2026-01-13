@@ -26,9 +26,25 @@ async def get_vehicles(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_permission(Permission.VEHICLE_READ))
 ):
-    """Get all vehicles"""
+    """Get all vehicles (vendors see only their own)"""
     repo = VehicleRepository()
-    vehicles = await repo.get_active_vehicles(db)
+    
+    # Check if user is vendor - filter by their vendor_id
+    user_role = current_user.get("role")
+    user_vendor_id = current_user.get("vendor_id")
+    
+    if user_role == "vendor":
+        # Vendor users see only their own vehicles
+        if not user_vendor_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vendor user must be linked to a vendor"
+            )
+        vehicles = await repo.get_by_vendor_async(db, user_vendor_id)
+    else:
+        # Admin and other roles see all vehicles
+        vehicles = await repo.get_active_vehicles(db)
+    
     return [VehicleResponse.model_validate(v) for v in vehicles]
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)

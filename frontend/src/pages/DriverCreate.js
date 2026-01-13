@@ -8,9 +8,13 @@ import { Button } from '@/components/ui/button';
 const DriverCreate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isVendor = user.role === 'vendor';
+  
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
     queryKey: ['vendors'],
     queryFn: () => vendorsAPI.getAll().then(res => res.data),
+    enabled: !isVendor, // Only load vendors if not a vendor user
   });
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
     queryKey: ['vehicles'],
@@ -22,7 +26,7 @@ const DriverCreate = () => {
   const [email, setEmail] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [licenseValidity, setLicenseValidity] = useState('');
-  const [vendorId, setVendorId] = useState('');
+  const [vendorId, setVendorId] = useState(isVendor ? user.vendor_id : '');
   const [vehicleId, setVehicleId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -94,6 +98,7 @@ const DriverCreate = () => {
               <label className="block text-sm font-medium text-slate-700">License Validity</label>
               <input value={licenseValidity} onChange={(e) => setLicenseValidity(e.target.value)} type="date" className="mt-1 block w-full border rounded-md p-2" />
             </div>
+            {!isVendor && (
             <div>
               <label className="block text-sm font-medium text-slate-700">Vendor</label>
               <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="mt-1 block w-full border rounded-md p-2">
@@ -101,6 +106,7 @@ const DriverCreate = () => {
                 {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
               </select>
             </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-700">Assigned Vehicle</label>
               <select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} className="mt-1 block w-full border rounded-md p-2">
