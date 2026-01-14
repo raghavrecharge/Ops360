@@ -80,6 +80,7 @@ const VARGA_LIST = [
 ];
 
 const App: React.FC = () => {
+  const { selectedProfile: authProfile, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
@@ -98,6 +99,134 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedVarga, setSelectedVarga] = useState(1);
+
+  // Auto-load profile from backend when auth profile changes
+  useEffect(() => {
+    if (authProfile) {
+      loadProfileFromBackend(authProfile.id);
+    }
+  }, [authProfile?.id]);
+
+  const loadProfileFromBackend = async (profileId: number) => {
+    if (!authProfile) return;
+    
+    setIsLoading(true);
+    try {
+      // Create a UserProfile from backend profile
+      const birthData: BirthData = {
+        name: authProfile.name,
+        dob: authProfile.birth_date,
+        tob: authProfile.birth_time || '12:00:00',
+        lat: authProfile.latitude || 28.6139,
+        lng: authProfile.longitude || 77.209,
+        place: authProfile.birth_place,
+        timezone: authProfile.timezone || 'Asia/Kolkata',
+      };
+
+      const userProfile: UserProfile = {
+        id: authProfile.id.toString(),
+        birthData,
+        preferences: {
+          ayanamsa: authProfile.ayanamsa || 'Lahiri',
+          chartStyle: (authProfile.chart_style as 'North' | 'South') || 'North',
+        },
+        isVerified: true,
+      };
+      setProfile(userProfile);
+
+      // Load chart data from backend API
+      try {
+        const chartBundle = await astrologyApi.getChartBundle(profileId);
+        setChart(chartBundle.d1);
+      } catch (err) {
+        // Fallback to local calculation
+        const d1 = astrologyService.calculateNatalChart(birthData);
+        setChart(d1);
+      }
+
+      // Load dashas from backend
+      try {
+        const dashaData = await astrologyApi.getDashas(profileId);
+        setDashas(dashaData);
+      } catch (err) {
+        setDashas(astrologyService.getVimshottariDashas(birthData, 5));
+      }
+
+      // Load yogas from backend
+      try {
+        const yogaData = await astrologyApi.getYogas(profileId);
+        setYogas(yogaData);
+      } catch (err) {
+        // Local fallback
+        const d1 = astrologyService.calculateNatalChart(birthData);
+        setYogas(astrologyService.detectYogas(d1));
+      }
+
+      // Load today data
+      try {
+        const today = await astrologyApi.getTodayData(profileId);
+        setTodayData(today);
+      } catch (err) {
+        setTodayData(astrologyService.getTodayData(birthData));
+      }
+
+      // Load planner data
+      try {
+        const planner = await astrologyApi.getPlannerData(profileId);
+        setPlannerData(planner);
+      } catch (err) {
+        setPlannerData(astrologyService.getPlannerData(birthData));
+      }
+
+      // Load shadbala
+      try {
+        const strength = await astrologyApi.getShadbala(profileId);
+        setShadbalaData(strength);
+      } catch (err) {
+        setShadbalaData(astrologyService.calculateShadbala(birthData));
+      }
+
+      // Load remedies
+      try {
+        const remedies = await astrologyApi.getRemedies(profileId);
+        setRemediesData(remedies);
+      } catch (err) {
+        const sbData = astrologyService.calculateShadbala(birthData);
+        const d1 = astrologyService.calculateNatalChart(birthData);
+        setRemediesData(astrologyService.generateRemedies(sbData, d1));
+      }
+
+      // Load ashtakavarga
+      try {
+        const av = await astrologyApi.getAshtakavarga(profileId);
+        setAvData(av);
+      } catch (err) {
+        const d1 = astrologyService.calculateNatalChart(birthData);
+        setAvData(astrologyService.calculateAshtakavarga(d1));
+      }
+
+      // Load knowledge base
+      try {
+        const kb = await astrologyApi.searchKnowledge('vedic astrology');
+        setKbData(kb.length > 0 ? kb : astrologyService.getKnowledgeBase());
+      } catch (err) {
+        setKbData(astrologyService.getKnowledgeBase());
+      }
+
+      // Load varshaphala
+      try {
+        const varsha = await astrologyApi.getVarshaphala(profileId, varshaYear);
+        setVarshaData(varsha as VarshaphalaData);
+      } catch (err) {
+        setVarshaData(astrologyService.calculateVarshaphala(birthData, varshaYear));
+      }
+
+    } catch (error) {
+      console.error('Failed to load profile data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [zoomScale, setZoomScale] = useState(1);
   const [chartStyle, setChartStyle] = useState<'North' | 'South'>('North');
   const [showInputForm, setShowInputForm] = useState(false);
