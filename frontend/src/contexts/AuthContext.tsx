@@ -32,6 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loadProfiles();
     }
     setIsLoading(false);
+
+    // Listen for logout events
+    const handleLogout = () => {
+      setUser(null);
+      setProfiles([]);
+      setSelectedProfile(null);
+    };
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
 
   const loadProfiles = async () => {
@@ -89,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // Reload and find
     const reloaded = await profileService.getProfiles();
+    setProfiles(reloaded);
     const created = reloaded.find(p => p.id === result.id);
     if (created) {
       setSelectedProfile(created);
