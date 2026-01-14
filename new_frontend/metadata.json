@@ -1,0 +1,7 @@
+{
+  "name": "Astro Jyotish - Ultimate Vedic Astrology Suite",
+  "description": "A comprehensive Vedic Astrology platform combining Parashara's Light calculations with Align27 personalized insights and RAG-powered AI interpretations.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

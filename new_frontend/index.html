@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro Jyotish | Vedic Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f97316;
+            --primary-light: #fff7ed;
+            --secondary: #fbbf24;
+            --success: #13deb9;
+            --danger: #fa896b;
+            --warning: #ffae1f;
+            --bg-body: #fcf8f5;
+            --bg-surface: #ffffff;
+            --text-main: #2d2621;
+            --text-muted: #8c7e74;
+            --border-color: #f1ebe6;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-muted); 
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .text-main { color: var(--text-main); }
+        .bg-surface { background-color: var(--bg-surface); }
+        .border-modern { border-color: var(--border-color); }
+        
+        ::-webkit-scrollbar { width: 7px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: #e5d5cc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .sidebar-active {
+            background-color: var(--primary);
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+        .card-modern {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(249, 115, 22, 0.08);
+            border-color: rgba(249, 115, 22, 0.2);
+        }
+        
+        .interactive-element {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+        .interactive-element:active {
+            transform: scale(0.96);
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+        .pulse-effect {
+            position: relative;
+        }
+        .pulse-effect::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 2px solid var(--primary);
+            animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@^1.4.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
