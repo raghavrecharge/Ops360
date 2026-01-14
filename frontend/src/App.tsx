@@ -681,4 +681,33 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+// Wrapper component with authentication
+function AppWithAuth() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fcf8f5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#f97316]/20 border-t-[#f97316] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#8c7e74] font-bold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthView />;
+  }
+
+  return <App />;
+}
+
+// Export with Provider wrapper
+export default function AppWithProviders() {
+  return (
+    <AuthProvider>
+      <AppWithAuth />
+    </AuthProvider>
+  );
+}
