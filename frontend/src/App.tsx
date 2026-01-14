@@ -100,6 +100,9 @@ const App: React.FC = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedVarga, setSelectedVarga] = useState(1);
 
+  const [varshaYear, setVarshaYear] = useState<number>(new Date().getFullYear());
+  const [varshaData, setVarshaData] = useState<VarshaphalaData | null>(null);
+
   // Auto-load profile from backend when auth profile changes
   useEffect(() => {
     if (authProfile) {
@@ -215,10 +218,10 @@ const App: React.FC = () => {
 
       // Load varshaphala
       try {
-        const varsha = await astrologyApi.getVarshaphala(profileId, varshaYear);
+        const varsha = await astrologyApi.getVarshaphala(profileId, new Date().getFullYear());
         setVarshaData(varsha as VarshaphalaData);
       } catch (err) {
-        setVarshaData(astrologyService.calculateVarshaphala(birthData, varshaYear));
+        setVarshaData(astrologyService.calculateVarshaphala(birthData, new Date().getFullYear()));
       }
 
     } catch (error) {
