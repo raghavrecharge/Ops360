@@ -251,9 +251,6 @@ const App: React.FC = () => {
     dataIntegrity: 'Unverified'
   });
 
-  const [varshaYear, setVarshaYear] = useState<number>(new Date().getFullYear());
-  const [varshaData, setVarshaData] = useState<VarshaphalaData | null>(null);
-
   const moonChart = useMemo(() => {
     if (!chart) return null;
     const moonPoint = chart.points.find(p => p.planet === Planet.Moon);
