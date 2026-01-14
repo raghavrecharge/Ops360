@@ -81,7 +81,7 @@ const DashaTree: React.FC<Props> = ({ nodes }) => {
               {idx > 0 && <ChevronRightIcon className="w-4 h-4 text-[#8c7e74] flex-shrink-0" />}
               <button
                 onClick={() => goBack(idx)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
                   isLast 
                     ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/20' 
                     : 'bg-white border border-[#f1ebe6] text-[#8c7e74] hover:bg-[#fff7ed] hover:text-[#f97316]'
@@ -108,7 +108,7 @@ const DashaTree: React.FC<Props> = ({ nodes }) => {
           </p>
         </div>
 
-        <div className="relative h-24 w-full bg-[#f1ebe6] rounded-2xl overflow-hidden flex shadow-inner group/timeline">
+        <div className="relative h-24 w-full bg-[#f1ebe6] rounded-lg overflow-hidden flex shadow-inner group/timeline">
           {currentNodes.map((node, i) => {
             const duration = new Date(node.end).getTime() - new Date(node.start).getTime();
             const width = (duration / totalDuration) * 100;
@@ -143,7 +143,7 @@ const DashaTree: React.FC<Props> = ({ nodes }) => {
 
                 {/* Tooltip on Hover */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover/bar:opacity-100 transition-opacity z-50 pointer-events-none min-w-[140px]">
-                   <div className="bg-[#2d2621] text-white p-3 rounded-xl text-[10px] shadow-xl">
+                   <div className="bg-[#2d2621] text-white p-3 rounded-lg text-[10px] shadow-xl">
                       <p className="font-black text-orange-400 mb-1">{node.planet}</p>
                       <p className="font-bold opacity-80">{new Date(node.start).toLocaleDateString()} - {new Date(node.end).toLocaleDateString()}</p>
                       {hasChildren && <p className="mt-2 text-emerald-400 font-black flex items-center gap-1 uppercase tracking-tighter"><MagnifyingGlassPlusIcon className="w-3 h-3" /> Click to Expand</p>}
@@ -183,12 +183,12 @@ const DashaTree: React.FC<Props> = ({ nodes }) => {
             <div
               key={node.id}
               onClick={() => drillDown(node)}
-              className={`group p-5 rounded-[24px] border-2 transition-all duration-300 flex items-center justify-between
+              className={`group p-5 rounded-[12px] border-2 transition-all duration-300 flex items-center justify-between
                 ${isActive ? 'bg-[#fff7ed] border-[#f97316]/30 shadow-md ring-4 ring-orange-500/5' : 'bg-white border-[#f1ebe6] hover:border-orange-200'}
                 ${hasChildren ? 'cursor-pointer hover:translate-x-1' : ''}`}
             >
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl ${getPlanetColor(node.planet)} flex items-center justify-center text-white shadow-lg shadow-current/20 transition-transform group-hover:scale-110`}>
+                <div className={`w-12 h-12 rounded-lg ${getPlanetColor(node.planet)} flex items-center justify-center text-white shadow-lg shadow-current/20 transition-transform group-hover:scale-110`}>
                   <span className="text-sm font-black uppercase tracking-tighter">{node.planet.substring(0, 2)}</span>
                 </div>
                 <div>

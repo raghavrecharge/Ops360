@@ -33,7 +33,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
       {/* Header Panel */}
-      <div className="bg-white rounded-[40px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-10">
+      <div className="bg-white rounded-[20px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="relative z-10 flex-1 space-y-6">
            <div className="flex items-center gap-3">
               <div className="px-4 py-1 bg-amber-50 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 text-amber-600 flex items-center gap-2">
@@ -50,7 +50,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat as any)}
-                  className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                  className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
                     activeCategory === cat 
                       ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/20' 
                       : 'bg-slate-50 text-[#8c7e74] hover:bg-orange-50 hover:text-[#f97316]'
@@ -81,10 +81,10 @@ const RemediesView: React.FC<Props> = ({ data }) => {
             <div className="h-1.5 w-full" style={{ backgroundColor: r.color }} />
             <div className="p-8 flex-1 flex flex-col">
                <div className="flex justify-between items-start mb-6">
-                  <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`} style={{ backgroundColor: `${r.color}15`, color: r.color }}>
+                  <div className={`w-14 h-14 rounded-[10px] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`} style={{ backgroundColor: `${r.color}15`, color: r.color }}>
                      {getIcon(r.type)}
                   </div>
-                  <span className="text-[10px] font-black px-2 py-1 bg-slate-50 border rounded-lg uppercase text-[#8c7e74]">{r.planet}</span>
+                  <span className="text-[10px] font-black px-2 py-1 bg-slate-50 border rounded uppercase text-[#8c7e74]">{r.planet}</span>
                </div>
 
                <h3 className="text-xl font-black text-[#2d2621] mb-2">{r.title}</h3>
@@ -93,7 +93,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
                </p>
 
                <div className="space-y-4 mt-auto">
-                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <div className="p-4 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
                      <p className="text-[10px] font-black text-[#f97316] uppercase mb-1">Key Benefit</p>
                      <p className="text-xs font-black text-[#2d2621]">{r.benefit}</p>
                   </div>
@@ -113,7 +113,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
 
                   {r.type === 'Mantra' && (
                     <div className="space-y-3">
-                       <div className="p-4 bg-indigo-50/30 border border-indigo-100 rounded-2xl">
+                       <div className="p-4 bg-indigo-50/30 border border-indigo-100 rounded-lg">
                           <p className="text-[10px] font-black text-indigo-600 uppercase mb-2 flex items-center gap-1.5">
                              <BoltIcon className="w-3.5 h-3.5" /> Japa Protocol
                           </p>
@@ -137,7 +137,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
                   {r.avoid && (
                     <div className="group/warn relative">
                        <ExclamationTriangleIcon className="w-5 h-5 text-rose-400 cursor-help" />
-                       <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-rose-600 text-white rounded-xl text-[10px] font-bold opacity-0 group-hover/warn:opacity-100 transition-opacity z-50 pointer-events-none">
+                       <div className="absolute bottom-full right-0 mb-2 w-48 p-3 bg-rose-600 text-white rounded-lg text-[10px] font-bold opacity-0 group-hover/warn:opacity-100 transition-opacity z-50 pointer-events-none">
                           Avoid: {r.avoid}
                        </div>
                     </div>
@@ -172,7 +172,7 @@ const RemediesView: React.FC<Props> = ({ data }) => {
                   ))}
                </div>
             </div>
-            <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-200">
+            <div className="bg-slate-50 p-8 rounded-[16px] border border-slate-200">
                <h4 className="text-xs font-black uppercase text-orange-500 mb-6 tracking-widest">Remedy Science Disclaimer</h4>
                <p className="text-xs font-medium text-[#8c7e74] leading-relaxed italic">
                  Remedies work by shifting the internal consciousness. For gemstone usage, always consult with a certified lapidary to ensure skin contact and authentic quality. Mantras should be pronounced with clarity and devotion for maximum efficacy.

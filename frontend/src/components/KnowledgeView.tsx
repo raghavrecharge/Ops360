@@ -35,7 +35,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
       {/* Header & Search */}
-      <div className="bg-white rounded-[40px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-10">
+      <div className="bg-white rounded-[20px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="relative z-10 flex-1 space-y-6">
            <div className="flex items-center gap-3">
               <div className="px-4 py-1 bg-indigo-50 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 text-indigo-600 flex items-center gap-2">
@@ -54,7 +54,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
                 placeholder="Search planets, houses, or concepts..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent focus:border-[#f97316]/30 focus:bg-white rounded-2xl outline-none text-sm font-bold text-[#2d2621] transition-all"
+                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-transparent focus:border-[#f97316]/30 focus:bg-white rounded-lg outline-none text-sm font-bold text-[#2d2621] transition-all"
               />
            </div>
         </div>
@@ -77,7 +77,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+            className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
               selectedCategory === cat 
                 ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/20' 
                 : 'bg-white border border-[#f1ebe6] text-[#8c7e74] hover:bg-orange-50 hover:text-[#f97316]'
@@ -97,10 +97,10 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
             className="card-modern p-8 bg-white flex flex-col cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-6">
-               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#8c7e74] group-hover:bg-[#f97316]/10 group-hover:text-[#f97316] transition-all">
+               <div className="w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center text-[#8c7e74] group-hover:bg-[#f97316]/10 group-hover:text-[#f97316] transition-all">
                   <BookOpenIcon className="w-6 h-6" />
                </div>
-               <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase border ${
+               <span className={`text-[10px] font-black px-2 py-1 rounded uppercase border ${
                  item.difficulty === 'Beginner' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
                  item.difficulty === 'Intermediate' ? 'bg-amber-50 border-amber-100 text-amber-600' :
                  'bg-rose-50 border-rose-100 text-rose-600'
@@ -148,7 +148,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             onClick={() => setSelectedArticle(null)}
            />
-           <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#fcf8f5] rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
+           <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#fcf8f5] rounded-[20px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
               {/* Overlay Header */}
               <div className="h-16 flex items-center justify-between px-8 bg-white border-b border-[#f1ebe6]">
                  <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
                        <div className="flex flex-wrap items-center gap-3">
                           <span className="text-xs font-black text-[#f97316] uppercase tracking-[0.2em]">{selectedArticle.category}</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-600 uppercase border border-emerald-100">{selectedArticle.difficulty}</span>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 uppercase border border-emerald-100">{selectedArticle.difficulty}</span>
                        </div>
                        <h1 className="text-4xl lg:text-5xl font-black text-[#2d2621] leading-tight tracking-tighter">
                           {selectedArticle.title}
@@ -181,7 +181,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
                        </div>
                     </div>
 
-                    <div className="p-6 bg-orange-50/40 rounded-3xl border border-orange-100 italic font-medium text-orange-900 leading-relaxed text-lg">
+                    <div className="p-6 bg-orange-50/40 rounded-xl border border-orange-100 italic font-medium text-orange-900 leading-relaxed text-lg">
                        "{selectedArticle.summary}"
                     </div>
 
@@ -197,7 +197,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
                        <h4 className="text-[10px] font-black text-[#8c7e74] uppercase tracking-[0.3em] mb-4">Related Topics</h4>
                        <div className="flex flex-wrap gap-2">
                           {selectedArticle.tags.map(tag => (
-                            <span key={tag} className="px-4 py-2 bg-white border border-[#f1ebe6] rounded-xl text-xs font-bold text-[#2d2621]">
+                            <span key={tag} className="px-4 py-2 bg-white border border-[#f1ebe6] rounded text-xs font-bold text-[#2d2621]">
                                #{tag}
                             </span>
                           ))}
@@ -210,7 +210,7 @@ const KnowledgeView: React.FC<Props> = ({ data }) => {
               <div className="p-8 bg-white border-t border-[#f1ebe6] flex justify-center">
                  <button 
                   onClick={() => setSelectedArticle(null)}
-                  className="px-12 py-4 bg-[#2d2621] text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+                  className="px-12 py-4 bg-[#2d2621] text-white rounded-lg font-black uppercase tracking-widest text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
                  >
                     Return to Library
                  </button>

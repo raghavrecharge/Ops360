@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { Planet, Sign } from './types';
 
 export const PLANET_ORDER: Planet[] = [
@@ -32,19 +30,4 @@ export const SIGN_NAMES: Record<Sign, string> = {
   [Sign.Capricorn]: 'Capricorn',
   [Sign.Aquarius]: 'Aquarius',
   [Sign.Pisces]: 'Pisces',
-};
-
-export const SIGN_SYMBOLS: Record<Sign, string> = {
-  [Sign.Aries]: '♈',
-  [Sign.Taurus]: '♉',
-  [Sign.Gemini]: '♊',
-  [Sign.Cancer]: '♋',
-  [Sign.Leo]: '♌',
-  [Sign.Virgo]: '♍',
-  [Sign.Libra]: '♎',
-  [Sign.Scorpio]: '♏',
-  [Sign.Sagittarius]: '♐',
-  [Sign.Capricorn]: '♑',
-  [Sign.Aquarius]: '♒',
-  [Sign.Pisces]: '♓',
 };

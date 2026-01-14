@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CompatibilityData } from '../types';
 import { 
@@ -8,14 +9,16 @@ import {
   ScaleIcon, 
   FireIcon,
   SparklesIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 interface Props {
   data: CompatibilityData;
+  onReset?: () => void;
 }
 
-const CompatibilityView: React.FC<Props> = ({ data }) => {
+const CompatibilityView: React.FC<Props> = ({ data, onReset }) => {
   const getScoreColor = (score: number) => {
     if (score >= 25) return 'text-emerald-500';
     if (score >= 18) return 'text-amber-500';
@@ -32,7 +35,7 @@ const CompatibilityView: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       {/* Header Summary */}
-      <div className="bg-white rounded-[40px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12">
+      <div className="bg-white rounded-[20px] p-10 border border-[#f1ebe6] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12">
         <div className="relative z-10 flex-1 space-y-6">
           <div className="flex items-center gap-3">
              <div className="px-4 py-1 bg-rose-50 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-100 text-rose-600 flex items-center gap-2">
@@ -45,18 +48,26 @@ const CompatibilityView: React.FC<Props> = ({ data }) => {
             "Vedic compatibility measures the alignment of two souls through the moon's nakshatra. A score above 18/36 is considered foundational for a harmonious partnership."
           </p>
           
-          <div className="flex items-center gap-4 pt-4">
-             <div className={`px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest border-2 flex items-center gap-2 ${
+          <div className="flex flex-wrap items-center gap-4 pt-4">
+             <div className={`px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest border-2 flex items-center gap-2 ${
                data.totalScore >= 18 ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'
              }`}>
                {data.totalScore >= 18 ? <CheckBadgeIcon className="w-5 h-5" /> : <ExclamationTriangleIcon className="w-5 h-5" />}
                {data.summary}
              </div>
+             {onReset && (
+               <button 
+                onClick={onReset}
+                className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest hover:border-orange-500 hover:text-orange-500 transition-all flex items-center gap-2"
+               >
+                 <ArrowPathIcon className="w-4 h-4" /> New Match
+               </button>
+             )}
           </div>
         </div>
 
         {/* Big Score Gauge */}
-        <div className="relative flex flex-col items-center justify-center p-10 bg-[#fcf8f5] rounded-[48px] border-2 border-dashed border-slate-200">
+        <div className="relative flex flex-col items-center justify-center p-10 bg-[#fcf8f5] rounded-[24px] border-2 border-dashed border-slate-200">
            <div className="relative w-48 h-48 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90">
                  <circle cx="96" cy="96" r="80" stroke="#f1ebe6" strokeWidth="16" fill="transparent" />
@@ -106,7 +117,7 @@ const CompatibilityView: React.FC<Props> = ({ data }) => {
                  </div>
 
                  {data.manglikStatus.cancellation && (
-                    <div className="mt-8 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
+                    <div className="mt-8 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2 mb-1">
                           <ShieldCheckIcon className="w-4 h-4" /> Cancellation Found
                        </p>

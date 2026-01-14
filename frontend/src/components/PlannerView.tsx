@@ -38,7 +38,7 @@ const PlannerView: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
       {/* Summary Section */}
-      <div className="bg-white p-10 rounded-[48px] border border-[#f1ebe6] shadow-sm relative overflow-hidden group">
+      <div className="bg-white p-10 rounded-[24px] border border-[#f1ebe6] shadow-sm relative overflow-hidden group">
         <div className="relative z-10">
           <h3 className="text-sm font-black text-[#f97316] uppercase tracking-[0.3em] mb-4">Master Strategy</h3>
           <p className="text-3xl font-black text-[#2d2621] max-w-4xl leading-tight">
@@ -56,10 +56,10 @@ const PlannerView: React.FC<Props> = ({ data }) => {
           <div key={i} className="card-modern p-6 bg-white border-2 border-transparent hover:border-orange-100 transition-all flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#2d2621]">
+                <div className="w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center text-[#2d2621]">
                   {getIcon(item.category)}
                 </div>
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getStatusColor(item.status)}`}>
+                <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest ${getStatusColor(item.status)}`}>
                   {item.status}
                 </span>
               </div>
@@ -144,7 +144,7 @@ const PlannerView: React.FC<Props> = ({ data }) => {
                          <p className="text-sm font-black">{t.title}</p>
                          <p className="text-[10px] font-bold text-slate-400">{t.time}</p>
                       </div>
-                      <span className={`text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-tighter ${
+                      <span className={`text-[9px] font-black px-2 py-1 rounded text-sm uppercase tracking-tighter ${
                         t.status.includes('Delay') ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                       }`}>{t.status}</span>
                    </div>

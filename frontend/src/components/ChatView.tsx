@@ -41,11 +41,11 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-[40px] border border-[#f1ebe6] shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-1000">
+    <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-[20px] border border-[#f1ebe6] shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-1000">
       {/* Chat Header */}
       <div className="px-8 py-5 border-b border-[#f1ebe6] flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-4">
-           <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+           <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
               <SparklesIcon className="w-6 h-6 text-[#f97316]" />
            </div>
            <div>
@@ -56,7 +56,7 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
               </p>
            </div>
         </div>
-        <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white border border-[#f1ebe6] rounded-xl">
+        <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white border border-[#f1ebe6] rounded-lg">
            <CommandLineIcon className="w-4 h-4 text-slate-400" />
            <span className="text-[10px] font-black text-[#8c7e74] uppercase tracking-tighter">Context: D1 + Dasha + Transits</span>
         </div>
@@ -78,7 +78,7 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
                   <button 
                     key={i} 
                     onClick={() => onSendMessage(s)}
-                    className="p-3 bg-white border border-[#f1ebe6] hover:border-[#f97316]/30 hover:bg-orange-50/30 rounded-2xl text-[11px] font-bold text-[#2d2621] transition-all text-left"
+                    className="p-3 bg-white border border-[#f1ebe6] hover:border-[#f97316]/30 hover:bg-orange-50/30 rounded-lg text-[11px] font-bold text-[#2d2621] transition-all text-left"
                   >
                     {s}
                   </button>
@@ -90,10 +90,10 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
             <div className={`flex gap-4 max-w-[85%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-sm ${m.role === 'user' ? 'bg-[#f97316] text-white' : 'bg-white border border-[#f1ebe6] text-indigo-600'}`}>
+              <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center shadow-sm ${m.role === 'user' ? 'bg-[#f97316] text-white' : 'bg-white border border-[#f1ebe6] text-indigo-600'}`}>
                 {m.role === 'user' ? <UserCircleIcon className="w-6 h-6" /> : <SparklesIcon className="w-6 h-6" />}
               </div>
-              <div className={`p-6 rounded-[32px] shadow-sm ${m.role === 'user' ? 'bg-[#f97316] text-white rounded-tr-none' : 'bg-white border border-[#f1ebe6] text-[#2d2621] rounded-tl-none'}`}>
+              <div className={`p-6 rounded-[16px] shadow-sm ${m.role === 'user' ? 'bg-[#f97316] text-white rounded-tr-none' : 'bg-white border border-[#f1ebe6] text-[#2d2621] rounded-tl-none'}`}>
                  <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
                    {m.content}
                  </p>
@@ -105,10 +105,10 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
         {isLoading && (
           <div className="flex justify-start animate-in fade-in duration-300">
             <div className="flex gap-4 max-w-[85%]">
-              <div className="w-10 h-10 rounded-2xl bg-white border border-[#f1ebe6] flex items-center justify-center text-indigo-600 shadow-sm animate-bounce">
+              <div className="w-10 h-10 rounded-lg bg-white border border-[#f1ebe6] flex items-center justify-center text-indigo-600 shadow-sm animate-bounce">
                 <CpuChipIcon className="w-6 h-6" />
               </div>
-              <div className="p-6 bg-slate-50 border border-[#f1ebe6] rounded-[32px] rounded-tl-none flex items-center gap-2">
+              <div className="p-6 bg-slate-50 border border-[#f1ebe6] rounded-[16px] rounded-tl-none flex items-center gap-2">
                  <div className="w-2 h-2 bg-[#f97316]/40 rounded-full animate-pulse" />
                  <div className="w-2 h-2 bg-[#f97316]/60 rounded-full animate-pulse [animation-delay:200ms]" />
                  <div className="w-2 h-2 bg-[#f97316] rounded-full animate-pulse [animation-delay:400ms]" />
@@ -128,12 +128,12 @@ const ChatView: React.FC<Props> = ({ messages, onSendMessage, isLoading }) => {
             disabled={isLoading}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your career, health, relationships or spiritual path..."
-            className="w-full pl-6 pr-16 py-5 bg-slate-50 border border-transparent focus:border-[#f97316]/30 focus:bg-white focus:ring-4 focus:ring-[#f97316]/5 rounded-3xl outline-none text-sm font-bold text-[#2d2621] transition-all disabled:opacity-50"
+            className="w-full pl-6 pr-16 py-5 bg-slate-50 border border-transparent focus:border-[#f97316]/30 focus:bg-white focus:ring-4 focus:ring-[#f97316]/5 rounded-xl outline-none text-sm font-bold text-[#2d2621] transition-all disabled:opacity-50"
           />
           <button 
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-[#f97316] text-white rounded-2xl hover:bg-[#fb923c] transition-all disabled:opacity-50 shadow-lg shadow-orange-500/20 active:scale-95"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-[#f97316] text-white rounded-lg hover:bg-[#fb923c] transition-all disabled:opacity-50 shadow-lg shadow-orange-500/20 active:scale-95"
           >
             <PaperAirplaneIcon className="w-6 h-6" />
           </button>

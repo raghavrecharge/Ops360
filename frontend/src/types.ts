@@ -22,6 +22,7 @@ export interface BirthData {
   lat: number;
   lng: number;
   tz: string;
+  isVerified?: boolean;
 }
 
 export interface ChartPoint {
@@ -127,7 +128,7 @@ export interface Remedy {
 
 export interface KBChunk {
   id: string;
-  category: 'Grahas' | 'Bhavas' | 'Nakshatras' | 'Concepts';
+  category: 'Grahas' | 'Bhavas' | 'Nakshatras' | 'Concepts' | 'Advanced';
   title: string;
   summary: string;
   content: string;
@@ -150,6 +151,7 @@ export interface UserProfile {
     ayanamsa: string;
     chartStyle: 'North' | 'South';
   };
+  isVerified: boolean;
 }
 
 export interface PanchangData {
@@ -191,4 +193,10 @@ export interface PlannerData {
   activities: ActivityScore[];
   schedule: PlannerSlot[];
   daySummary: string;
+}
+
+export interface ServiceStatus {
+  astrologyEngine: 'Operational' | 'Error' | 'Initializing';
+  aiInterpretation: 'Operational' | 'Rate Limited' | 'Error' | 'Initializing';
+  dataIntegrity: 'Verified' | 'Unverified' | 'Compromised';
 }

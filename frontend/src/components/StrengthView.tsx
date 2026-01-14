@@ -56,7 +56,7 @@ const StrengthView: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       {/* Header Summary - Light Theme */}
-      <div className="bg-white rounded-[40px] p-10 text-[#2d2621] flex flex-col lg:flex-row items-center gap-12 border border-[#f1ebe6] shadow-sm relative overflow-hidden">
+      <div className="bg-white rounded-[20px] p-10 text-[#2d2621] flex flex-col lg:flex-row items-center gap-12 border border-[#f1ebe6] shadow-sm relative overflow-hidden">
         <div className="relative z-10 space-y-6 flex-1">
           <div className="flex items-center gap-3">
              <div className="px-3 py-1 bg-slate-50 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-100 text-[#8c7e74]">Celestial Potency</div>
@@ -68,19 +68,19 @@ const StrengthView: React.FC<Props> = ({ data }) => {
           </p>
           
           <div className="grid grid-cols-2 gap-4 pt-4">
-             <div className="p-5 rounded-3xl bg-[#fcf8f5] border border-[#f1ebe6]">
+             <div className="p-5 rounded-xl bg-[#fcf8f5] border border-[#f1ebe6]">
                 <p className="text-[10px] font-black text-[#8c7e74] uppercase mb-2">King of the Chart</p>
                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                   <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                       <TrophyIcon className="w-6 h-6" />
                    </div>
                    <p className="text-xl font-black text-[#2d2621]">{data.reduce((prev, current) => (prev.total > current.total) ? prev : current).planet}</p>
                 </div>
              </div>
-             <div className="p-5 rounded-3xl bg-[#fcf8f5] border border-[#f1ebe6]">
+             <div className="p-5 rounded-xl bg-[#fcf8f5] border border-[#f1ebe6]">
                 <p className="text-[10px] font-black text-[#8c7e74] uppercase mb-2">Primary Challenge</p>
                 <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                   <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
                       <FireIcon className="w-6 h-6" />
                    </div>
                    <p className="text-xl font-black text-[#2d2621]">{data.reduce((prev, current) => (prev.total < current.total) ? prev : current).planet}</p>
@@ -90,7 +90,7 @@ const StrengthView: React.FC<Props> = ({ data }) => {
         </div>
 
         {/* Radar Chart SVG - Adjusted for Light Background */}
-        <div className="relative bg-[#fcf8f5] rounded-[48px] p-8 border border-[#f1ebe6]">
+        <div className="relative bg-[#fcf8f5] rounded-[24px] p-8 border border-[#f1ebe6]">
           <svg width={size} height={size} className="drop-shadow-sm">
             {/* Grid Circles */}
             {[0.2, 0.4, 0.6, 0.8, 1].map((step, i) => (
@@ -150,14 +150,14 @@ const StrengthView: React.FC<Props> = ({ data }) => {
                 <button
                   key={d.planet}
                   onClick={() => setSelectedPlanet(d.planet)}
-                  className={`p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                  className={`p-4 rounded-xl border-2 transition-all flex items-center justify-between group ${
                     selectedPlanet === d.planet 
                       ? 'bg-white border-[#f97316] shadow-lg ring-4 ring-orange-500/5' 
                       : 'bg-[#fcf8f5] border-transparent hover:border-orange-200'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs transition-colors ${
+                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-xs transition-colors ${
                        selectedPlanet === d.planet ? 'bg-orange-500 text-white' : 'bg-white text-[#8c7e74]'
                      }`}>
                         {d.planet.substring(0, 2)}

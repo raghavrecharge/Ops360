@@ -4,9 +4,10 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline';
 interface Props {
   sav: number[];
   title: string;
+  onHouseHover?: (house: number | null) => void;
 }
 
-const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
+const AshtakavargaChart: React.FC<Props> = ({ sav, title, onHouseHover }) => {
   // SAV houses are traditionally indexed 1-12 corresponding to Rasi signs or Houses from Lagna.
   // We'll map them to the 12 house positions in the North Indian layout.
   
@@ -35,8 +36,8 @@ const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
   const getHouseColor = (points: number) => {
     if (points >= 32) return 'fill-emerald-500';
     if (points >= 28) return 'fill-emerald-400';
-    if (points >= 25) return 'fill-amber-400';
-    if (points >= 20) return 'fill-orange-400';
+    if (points >= 25) return 'fill-indigo-500';
+    if (points >= 20) return 'fill-amber-500';
     return 'fill-rose-500';
   };
 
@@ -49,23 +50,20 @@ const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
   };
 
   return (
-    <div className="card-modern p-8 bg-white border-[#f1ebe6]">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h3 className="text-xl font-black text-[#2d2621]">{title}</h3>
-          <p className="text-[10px] font-bold text-[#8c7e74] uppercase tracking-widest mt-1">Heatmap of House Potency</p>
+    <div className="w-full flex flex-col items-center">
+      {title && (
+        <div className="flex justify-between items-center w-full mb-8">
+          <div>
+            <h3 className="text-xl font-black text-[#2d2621]">{title}</h3>
+            <p className="text-[10px] font-bold text-[#8c7e74] uppercase tracking-widest mt-1">Heatmap of House Potency</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-           <div className="w-3 h-3 rounded-full bg-emerald-400" />
-           <div className="w-3 h-3 rounded-full bg-amber-400" />
-           <div className="w-3 h-3 rounded-full bg-rose-400" />
-        </div>
-      </div>
+      )}
 
-      <div className="relative group">
-        <svg viewBox="0 0 300 300" className="w-full max-w-[420px] mx-auto overflow-visible">
+      <div className="relative group w-full flex flex-col items-center">
+        <svg viewBox="0 0 300 300" className="w-full max-w-[480px] overflow-visible drop-shadow-2xl">
           {/* Main Frame */}
-          <rect x="0" y="0" width="300" height="300" fill="none" stroke="#f1ebe6" strokeWidth="2" />
+          <rect x="0" y="0" width="300" height="300" fill="none" stroke="#f1ebe6" strokeWidth="2" rx="4" />
           <line x1="0" y1="0" x2="300" y2="300" stroke="#f1ebe6" strokeWidth="1" />
           <line x1="300" y1="0" x2="0" y2="300" stroke="#f1ebe6" strokeWidth="1" />
           <path d="M150 0 L300 150 L150 300 L0 150 Z" fill="none" stroke="#f1ebe6" strokeWidth="1.5" />
@@ -77,63 +75,70 @@ const AshtakavargaChart: React.FC<Props> = ({ sav, title }) => {
             const opacity = getHouseOpacity(points);
             
             return (
-              <g key={i} className="transition-all duration-500">
+              <g 
+                key={i} 
+                className="transition-all duration-300 group/house"
+                onMouseEnter={() => onHouseHover?.(i + 1)}
+                onMouseLeave={() => onHouseHover?.(null)}
+              >
                 <path 
                   d={path} 
-                  className={`${colorClass} hover:opacity-40 transition-opacity cursor-help`}
+                  className={`${colorClass} transition-opacity cursor-pointer group-hover/house:fill-opacity-40`}
                   fillOpacity={opacity}
                 />
+                
+                {/* Background circle for score */}
                 <circle 
                   cx={labelCoords[i].x} 
                   cy={labelCoords[i].y} 
-                  r="14" 
-                  className="fill-white stroke-[#f1ebe6]" 
-                  strokeWidth="1" 
+                  r="16" 
+                  className="fill-white stroke-[#f1ebe6] shadow-sm transition-transform group-hover/house:scale-110" 
+                  strokeWidth="1.5" 
                 />
+                
+                {/* Score Number */}
                 <text 
                   x={labelCoords[i].x} 
                   y={labelCoords[i].y + 1} 
                   textAnchor="middle" 
                   alignmentBaseline="middle"
-                  className="font-black text-[12px] fill-[#2d2621]"
+                  className="font-black text-[13px] fill-[#2d2621] pointer-events-none"
                 >
                   {points}
                 </text>
+                
+                {/* House Indicator */}
                 <text 
                   x={labelCoords[i].x} 
-                  y={labelCoords[i].y + 16} 
+                  y={labelCoords[i].y + 20} 
                   textAnchor="middle" 
-                  className="font-bold text-[8px] fill-[#8c7e74] uppercase tracking-tighter"
+                  className="font-black text-[8px] fill-[#8c7e74] uppercase tracking-tighter opacity-40 group-hover/house:opacity-100 pointer-events-none"
                 >
                   H{i + 1}
                 </text>
               </g>
             );
           })}
+
+          <text x="150" y="150" textAnchor="middle" alignmentBaseline="middle" className="fill-indigo-500/10 font-black text-[60px] pointer-events-none select-none">
+            SAV
+          </text>
         </svg>
 
         {/* Legend */}
-        <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 px-2">
+        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 w-full max-w-2xl px-4">
            {[
-             { label: 'Exalted (32+)', color: 'bg-emerald-500' },
+             { label: 'Exceptional (>32)', color: 'bg-emerald-500' },
              { label: 'Strong (28-31)', color: 'bg-emerald-400' },
-             { label: 'Average (25-27)', color: 'bg-amber-400' },
-             { label: 'Critical (below 25)', color: 'bg-rose-500' }
+             { label: 'Collective (25-27)', color: 'bg-indigo-500' },
+             { label: 'Caution (<25)', color: 'bg-rose-500' }
            ].map((item, idx) => (
-             <div key={idx} className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                <span className="text-[9px] font-black text-[#8c7e74] uppercase tracking-tighter">{item.label}</span>
+             <div key={idx} className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                <div className={`w-3 h-3 rounded-full ${item.color} shadow-inner`} />
+                <span className="text-[10px] font-black text-[#8c7e74] uppercase tracking-widest whitespace-nowrap">{item.label}</span>
              </div>
            ))}
         </div>
-      </div>
-
-      <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-200 flex gap-3">
-         <InformationCircleIcon className="w-5 h-5 text-[#f97316] flex-shrink-0" />
-         <p className="text-[10px] font-bold text-[#8c7e74] leading-relaxed">
-            Sarvashtakavarga (SAV) points represent the collective strength of the 7 main planets in a specific house. 
-            Houses with more than 28 points act as focus areas for growth and success during transits.
-         </p>
       </div>
     </div>
   );
