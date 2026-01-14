@@ -302,7 +302,6 @@ const App: React.FC = () => {
   }, [profile, varshaYear]);
 
   const handleSendMessage = async (content: string) => {
-    if (!astroContext) return;
     const userMsg: ChatMessage = { role: 'user', content };
     const newHistory = [...chatHistory, userMsg];
     setChatHistory(newHistory);
@@ -310,20 +309,21 @@ const App: React.FC = () => {
     setGlobalError(null);
 
     try {
-      const response = await geminiService.chat(newHistory, astroContext);
-      setChatHistory([...newHistory, response]);
+      // Use backend API for chat if profile exists
+      if (authProfile?.id) {
+        const response = await astrologyApi.sendChatMessage(authProfile.id, content);
+        setChatHistory([...newHistory, response]);
+      } else if (astroContext) {
+        // Fallback to gemini service
+        const response = await geminiService.chat(newHistory, astroContext);
+        setChatHistory([...newHistory, response]);
+      } else {
+        setChatHistory([...newHistory, { role: 'assistant', content: 'Please set up a profile first to use the chat feature.' }]);
+      }
       setServiceStatus(prev => ({ ...prev, aiInterpretation: 'Operational' }));
     } catch (error: any) {
       console.error("Chat Error:", error);
-      if (error.message === "GEMINI_QUOTA_EXHAUSTED") {
-        setGlobalError("AI quota reached. Please check your billing or try again in a few minutes.");
-      } else if (error.message === "API_KEY_NOT_FOUND") {
-        if (window.aistudio?.openSelectKey) {
-          await window.aistudio.openSelectKey();
-        }
-      } else {
-        setGlobalError("The cosmic transmission was interrupted. Please try again.");
-      }
+      setChatHistory([...newHistory, { role: 'assistant', content: 'I apologize, but I could not process your request. Please try again.' }]);
       setServiceStatus(prev => ({ ...prev, aiInterpretation: 'Error' }));
     } finally {
       setIsChatLoading(false);
