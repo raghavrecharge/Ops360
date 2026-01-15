@@ -113,6 +113,10 @@ export const authService = {
   getToken(): string | null {
     return storageService.getToken();
   },
+
+  getStoredUser(): any {
+    return storageService.getUser();
+  },
 };
 
 export default authService;

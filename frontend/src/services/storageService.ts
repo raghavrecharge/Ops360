@@ -67,6 +67,23 @@ export const storageService = {
     this.clearUser();
     this.clearSelectedProfile();
   },
+
+  // Get recent accounts (for login history)
+  getRecentAccounts(): Array<{ email: string; lastLogin: string }> {
+    const accounts = localStorage.getItem('recent_accounts');
+    return accounts ? JSON.parse(accounts) : [];
+  },
+
+  // Save recent account
+  addRecentAccount(email: string): void {
+    const accounts = this.getRecentAccounts();
+    const existing = accounts.findIndex(a => a.email === email);
+    if (existing >= 0) {
+      accounts.splice(existing, 1);
+    }
+    accounts.unshift({ email, lastLogin: new Date().toISOString() });
+    localStorage.setItem('recent_accounts', JSON.stringify(accounts.slice(0, 5)));
+  },
 };
 
 export default storageService;
