@@ -162,7 +162,7 @@ export interface LoginCredentials {
 
 export interface UserProfile {
   id: string;
-  account: UserAccount;
+  account?: UserAccount;
   birthData: BirthData;
   preferences: {
     ayanamsa: string;

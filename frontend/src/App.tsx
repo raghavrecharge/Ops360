@@ -642,7 +642,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {activeTab === 'dashas' && <DashaTree nodes={dashas} />}
+                {activeTab === 'dashas' && <DashaTree nodes={dashas} onDrillDown={(node) => { if (node.children) setDashas(node.children); }} onGoUp={() => { if (profile) setDashas(astrologyService.getVimshottariDashas(profile.birthData, 5)); }} />}
                 {activeTab === 'varshaphala' && varshaData && <VarshaphalaView data={varshaData} onYearChange={setVarshaYear} chartStyle={chartStyle} />}
                 {activeTab === 'ashtakavarga' && avData && <AshtakavargaView data={avData} />}
                 {activeTab === 'strength' && shadbalaData.length > 0 && <StrengthView data={shadbalaData} />}
