@@ -42,6 +42,9 @@ export interface VarshaphalaData {
   year: number;
   age: number;
   muntha: { sign: Sign; house: number; signName: string };
+  munthaSign?: string;
+  munthaHouse?: number;
+  ascendant?: string;
   yearLord: Planet;
   chart: DivisionalChart;
   predictions: Array<{
@@ -49,6 +52,23 @@ export interface VarshaphalaData {
     area: string;
     prediction: string;
     strength: 'Strong' | 'Moderate' | 'Weak';
+  }>;
+  muddaDashas?: Array<{
+    planet: Planet;
+    start: string;
+    end: string;
+    duration: number;
+  }>;
+  sahams?: Array<{
+    name: string;
+    sign: Sign;
+    degree: number;
+    signName: string;
+  }>;
+  yogas?: Array<{
+    name: string;
+    description: string;
+    strength: number;
   }>;
 }
 
