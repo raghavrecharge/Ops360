@@ -26,6 +26,15 @@ export interface AshtakavargaData {
   planetScores: Record<string, number[]>;
   sarvashtaka: number[];
   total: number;
+  // Extended fields for component compatibility
+  sav: number[];
+  bav: Record<string, number[]>;
+  planetTotals: Record<string, number>;
+  summary: {
+    strongest: string;
+    weakest: string;
+    avgScore: number;
+  };
 }
 
 // Varshaphala Data type
@@ -372,19 +381,38 @@ export const astrologyService = {
   calculateAshtakavarga(chart: DivisionalChart): AshtakavargaData {
     const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
     const planetScores: Record<string, number[]> = {};
+    const bav: Record<string, number[]> = {};
+    const planetTotals: Record<string, number> = {};
     
     planets.forEach(p => {
-      planetScores[p] = Array(12).fill(0).map(() => Math.floor(Math.random() * 8));
+      const scores = Array(12).fill(0).map(() => Math.floor(Math.random() * 8));
+      planetScores[p] = scores;
+      bav[p] = scores;
+      planetTotals[p] = scores.reduce((a, b) => a + b, 0);
     });
 
     const sarvashtaka = Array(12).fill(0).map((_, i) => 
       planets.reduce((sum, p) => sum + planetScores[p][i], 0)
     );
 
+    const total = sarvashtaka.reduce((a, b) => a + b, 0);
+    const avgScore = total / 12;
+
+    // Find strongest and weakest
+    const sortedPlanets = Object.entries(planetTotals).sort((a, b) => b[1] - a[1]);
+
     return {
       planetScores,
       sarvashtaka,
-      total: sarvashtaka.reduce((a, b) => a + b, 0),
+      total,
+      sav: sarvashtaka,
+      bav,
+      planetTotals,
+      summary: {
+        strongest: sortedPlanets[0][0],
+        weakest: sortedPlanets[sortedPlanets.length - 1][0],
+        avgScore: Math.round(avgScore * 10) / 10,
+      },
     };
   },
 
