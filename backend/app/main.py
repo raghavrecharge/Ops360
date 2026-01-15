@@ -21,6 +21,7 @@ from app.api import ashtakavarga, yogas, strength, varshaphala, compatibility, r
 from app.api import align27
 from app.api import kb, chat, ml  # Batch 5
 from app.api import dashboard  # Batch 6
+from app.api import panchang, today, calendar  # New APIs
 
 app = FastAPI(
     title="AstroOS API",
@@ -60,6 +61,11 @@ app.include_router(ml.router)
 
 # Include routers - Batch 6
 app.include_router(dashboard.router)
+
+# Include routers - New APIs
+app.include_router(panchang.router)
+app.include_router(today.router)
+app.include_router(calendar.router)
 
 @app.on_event("startup")
 async def startup():
