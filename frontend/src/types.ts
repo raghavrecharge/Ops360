@@ -1,3 +1,5 @@
+
+
 export enum Planet {
   Sun = 'Sun',
   Moon = 'Moon',
@@ -144,8 +146,23 @@ export interface ChatMessage {
   astroContext?: any;
 }
 
+export interface UserAccount {
+  email: string;
+  username: string;
+  joinedDate: string;
+  avatar?: string;
+}
+
+// Added missing LoginCredentials interface
+export interface LoginCredentials {
+  email: string;
+  username?: string;
+  password?: string;
+}
+
 export interface UserProfile {
   id: string;
+  account: UserAccount;
   birthData: BirthData;
   preferences: {
     ayanamsa: string;

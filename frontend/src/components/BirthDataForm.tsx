@@ -8,12 +8,13 @@ import {
   MapPinIcon, 
   GlobeAltIcon,
   SparklesIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { astrologyService } from '../services/astrologyService';
 
 interface Props {
-  onCalculate: (data: BirthData) => void;
+  onCalculate: (data: BirthData) => Promise<void>;
   initialData?: BirthData | null;
 }
 
@@ -27,16 +28,25 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
     tz: 'Asia/Kolkata'
   });
   const [errors, setErrors] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validation = astrologyService.validateBirthData(formData);
     if (!validation.isValid) {
       setErrors(validation.errors);
       return;
     }
+    
     setErrors([]);
-    onCalculate({ ...formData, isVerified: true });
+    setIsSubmitting(true);
+    try {
+      await onCalculate({ ...formData, isVerified: true });
+    } catch (err) {
+      setErrors(["Cosmic synchronization failed. Please check your network."]);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,7 +57,7 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
             <SparklesIcon className="w-9 h-9" />
           </div>
           <h2 className="text-3xl font-black text-slate-800 tracking-tight">Initialize Your Matrix</h2>
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-[0.2em]">Enter Precise Birth Coordinates for High-Fidelity Analysis</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Enter Precise Birth Coordinates for High-Fidelity Analysis</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -55,7 +65,7 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
             <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
               <ExclamationCircleIcon className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-xs font-black text-rose-600 uppercase tracking-widest">Initialization Error</p>
+                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Initialization Error</p>
                 <ul className="text-xs font-bold text-rose-500 list-disc list-inside">
                   {errors.map((err, i) => <li key={i}>{err}</li>)}
                 </ul>
@@ -70,10 +80,11 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
                 <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                 <input 
                   type="text" 
+                  disabled={isSubmitting}
                   placeholder="e.g. Raghav Sanoriya"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-800 transition-all disabled:opacity-50"
                 />
               </div>
             </div>
@@ -85,9 +96,10 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
                   <CalendarDaysIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none" />
                   <input 
                     type="date" 
+                    disabled={isSubmitting}
                     value={formData.dob}
                     onChange={e => setFormData({...formData, dob: e.target.value})}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-800 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -97,9 +109,10 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
                   <ClockIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none" />
                   <input 
                     type="time" 
+                    disabled={isSubmitting}
                     value={formData.tob}
                     onChange={e => setFormData({...formData, tob: e.target.value})}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-800 transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -112,10 +125,11 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
                 <input 
                   type="number" 
                   step="any"
+                  disabled={isSubmitting}
                   placeholder="28.6139"
                   value={formData.lat}
                   onChange={e => setFormData({...formData, lat: parseFloat(e.target.value)})}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-800 transition-all disabled:opacity-50"
                 />
               </div>
             </div>
@@ -127,10 +141,11 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
                 <input 
                   type="number" 
                   step="any"
+                  disabled={isSubmitting}
                   placeholder="77.2090"
                   value={formData.lng}
                   onChange={e => setFormData({...formData, lng: parseFloat(e.target.value)})}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-700 transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-800 transition-all disabled:opacity-50"
                 />
               </div>
             </div>
@@ -139,11 +154,19 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
           <div className="pt-6">
             <button 
               type="submit"
-              className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              disabled={isSubmitting}
+              className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-80 flex items-center justify-center gap-3"
             >
-              Generate Cosmic Blueprint
+              {isSubmitting ? (
+                <>
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  Storing Data...
+                </>
+              ) : (
+                'Generate Cosmic Blueprint'
+              )}
             </button>
-            <p className="text-center text-[9px] font-bold text-slate-400 uppercase mt-4 tracking-widest">
+            <p className="text-center text-[9px] font-black text-slate-400 uppercase mt-4 tracking-widest">
               Ayanamsa: True Chitra Paksha (Lahiri) • Siderial Zodiac
             </p>
           </div>

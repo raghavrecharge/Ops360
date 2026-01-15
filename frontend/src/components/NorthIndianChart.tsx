@@ -1,27 +1,22 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DivisionalChart, Planet, Sign, ChartPoint } from '../types';
 import { SIGN_NAMES } from '../constants';
 import { 
-  XMarkIcon, 
   SparklesIcon, 
-  InformationCircleIcon, 
-  BoltIcon, 
-  HandRaisedIcon, 
-  SpeakerWaveIcon, 
-  BeakerIcon, 
-  StarIcon, 
-  BookmarkIcon,
-  ShieldCheckIcon,
-  AcademicCapIcon,
-  FireIcon
+  InformationCircleIcon,
+  XMarkIcon,
+  StarIcon,
+  MapIcon,
+  Square3Stack3DIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/react/24/outline';
-import { astrologyService, PLANET_REMEDY_MAP } from '../services/astrologyService';
 import ZodiacIcon from './ZodiacIcon';
 
 interface Props {
   chart: DivisionalChart;
-  title?: string;
+  selectedPlanet: ChartPoint | null;
+  onSelectPlanet: (p: ChartPoint | null) => void;
   scale?: number;
   showLegend?: boolean;
 }
@@ -32,11 +27,17 @@ const CursorIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function NorthIndianChart({ chart, title, scale = 1, showLegend = true }: Props) {
+export default function NorthIndianChart({ chart, selectedPlanet, onSelectPlanet, scale = 1, showLegend = true }: Props) {
   const [hoveredPlanet, setHoveredPlanet] = useState<ChartPoint | null>(null);
-  const [selectedPlanet, setSelectedPlanet] = useState<ChartPoint | null>(null);
   const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showKey, setShowKey] = useState(false);
+  const tooltipTimeout = useRef<number | null>(null);
+
+  // Pan State
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
 
   const width = 600;
   const height = 450;
@@ -75,46 +76,10 @@ export default function NorthIndianChart({ chart, title, scale = 1, showLegend =
     return `${d.toString().padStart(2, '0')}°${m.toString().padStart(2, '0')}'`;
   };
 
-  const houseSignifications: Record<number, string> = {
-    1: "Self, Physicality, Life Path",
-    2: "Wealth, Family, Speech",
-    3: "Siblings, Courage, Communication",
-    4: "Home, Comforts, Mother",
-    5: "Intelligence, Creativity, Children",
-    6: "Enemies, Debts, Diseases",
-    7: "Partnerships, Marriage, Public",
-    8: "Longevity, Transformation, Secrets",
-    9: "Fortune, Dharma, Philosophy",
-    10: "Career, Status, Karma",
-    11: "Gains, Desires, Friendships",
-    12: "Expenses, Loss, Liberation",
+  const calculateD9Sign = (pSign: number, pDegree: number): Sign => {
+    const totalDegrees = (pSign - 1) * 30 + pDegree;
+    return ((Math.floor(totalDegrees / (30 / 9)) % 12) + 1) as Sign;
   };
-
-  // Navamsha Logic for Detail Panel
-  const navamshaDetails = useMemo(() => {
-    if (!selectedPlanet || !lagnaPoint) return null;
-    
-    const calculateD9Sign = (pSign: number, pDegree: number) => {
-      const totalDegrees = (pSign - 1) * 30 + pDegree;
-      return (Math.floor(totalDegrees * 9 / 30) % 12) + 1;
-    };
-
-    const d9Sign = calculateD9Sign(selectedPlanet.sign, selectedPlanet.degree) as Sign;
-    const d9LagnaSign = calculateD9Sign(lagnaPoint.sign, lagnaPoint.degree);
-    const d9House = ((d9Sign - d9LagnaSign + 12) % 12) + 1;
-    
-    // Dignity check logic for D9
-    const EXALT_SIGNS: Record<string, Sign> = { Sun: Sign.Aries, Moon: Sign.Taurus, Mars: Sign.Capricorn, Mercury: Sign.Virgo, Jupiter: Sign.Cancer, Venus: Sign.Pisces, Saturn: Sign.Libra };
-    const DEBIL_SIGNS: Record<string, Sign> = { Sun: Sign.Libra, Moon: Sign.Scorpio, Mars: Sign.Cancer, Mercury: Sign.Pisces, Jupiter: Sign.Capricorn, Venus: Sign.Virgo, Saturn: Sign.Aries };
-    
-    let d9Dignity = "Neutral";
-    if (EXALT_SIGNS[selectedPlanet.planet] === d9Sign) d9Dignity = "Exalted";
-    else if (DEBIL_SIGNS[selectedPlanet.planet] === d9Sign) d9Dignity = "Debilitated";
-    
-    const isVargottama = d9Sign === selectedPlanet.sign;
-
-    return { d9Sign, d9House, d9Dignity, isVargottama };
-  }, [selectedPlanet, lagnaPoint]);
 
   const getHousePath = (h: number) => {
     switch(h) {
@@ -141,172 +106,337 @@ export default function NorthIndianChart({ chart, title, scale = 1, showLegend =
     { x: cx * 1.55, y: cy }, { x: cx * 1.8, y: cy / 2.2 }, { x: cx * 1.6, y: cy / 4.5 },
   ];
 
-  const selectedPlanetRemedy = selectedPlanet ? PLANET_REMEDY_MAP[selectedPlanet.planet] : null;
+  const handlePlanetEnter = (p: ChartPoint) => {
+    if (tooltipTimeout.current) window.clearTimeout(tooltipTimeout.current);
+    setHoveredPlanet(p);
+  };
+
+  const handlePlanetLeave = () => {
+    tooltipTimeout.current = window.setTimeout(() => {
+      setHoveredPlanet(null);
+    }, 600);
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+    if (isDragging) {
+      setOffset({
+        x: e.clientX - dragStart.current.x,
+        y: e.clientY - dragStart.current.y
+      });
+    }
+  };
+
+  const onMouseUp = () => setIsDragging(false);
 
   return (
-    <div className="flex flex-col w-full items-center gap-4" onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}>
-      <div className="relative w-full aspect-[4/3] md:aspect-[5/3] bg-[#fffaf5] rounded-[32px] border border-[#fde6d2] p-1 md:p-4 shadow-sm overflow-hidden select-none">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible touch-none">
-          {hoveredHouse && (
-            <path d={getHousePath(hoveredHouse)} fill="rgba(249, 115, 22, 0.12)" className="animate-in fade-in duration-200 pointer-events-none" />
-          )}
+    <div 
+      className="flex flex-col w-full items-center gap-4 relative overflow-hidden" 
+      onMouseMove={onMouseMove}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+    >
+      
+      {/* 1. INTERACTIVE FLOATING TOOLTIP */}
+      {hoveredPlanet && (
+        <div 
+          className="fixed pointer-events-none z-[9999] transition-all duration-300 ease-out transform"
+          style={{ 
+            left: mousePos.x + 20, 
+            top: mousePos.y + 20,
+          }}
+        >
+          <div className="bg-white border border-orange-100 shadow-[0_32px_64px_-16px_rgba(249,115,22,0.25)] rounded-[32px] p-6 min-w-[340px] overflow-hidden group pointer-events-auto">
+            <div className="flex items-center gap-5 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-white font-black text-xl shadow-xl shadow-orange-500/20 group-hover:rotate-6 transition-transform">
+                {getPlanetCode(hoveredPlanet.planet)}
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-orange-400 uppercase tracking-[0.3em] mb-0.5">Celestial Matrix</p>
+                <h4 className="text-xl font-black text-slate-800 tracking-tight">{hoveredPlanet.planet}</h4>
+              </div>
+            </div>
 
-          <g className="chart-lines pointer-events-none">
-            <rect x="0" y="0" width={width} height={height} fill="none" stroke="#fce7d1" strokeWidth="2" rx="24" />
-            <line x1="0" y1="0" x2={width} y2={height} stroke="#fce7d1" strokeWidth="1.5" />
-            <line x1={width} y1="0" x2="0" y2={height} stroke="#fce7d1" strokeWidth="1.5" />
-            <path d={`M${cx} 0 L${width} ${cy} L${cx} ${height} L0 ${cy} Z`} fill="none" stroke="#fce7d1" strokeWidth="2.5" />
-          </g>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-50 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">House</p>
+                  <p className="text-sm font-black text-slate-700 flex items-center gap-2">
+                     <MapIcon className="w-4 h-4 text-indigo-500" /> H{hoveredPlanet.house}
+                  </p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-2xl">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Sign</p>
+                  <p className="text-sm font-black text-slate-700 flex items-center gap-2">
+                     <ZodiacIcon sign={hoveredPlanet.sign} className="w-4 h-4 text-indigo-500" /> {SIGN_NAMES[hoveredPlanet.sign]}
+                  </p>
+                </div>
+              </div>
 
-          {signCenters.map((center, i) => {
-            const houseNum = i + 1;
-            const sign = getSignForHouse(houseNum);
-            const planets = getPlanetsInHouse(houseNum);
-            const isHouseActive = hoveredHouse === houseNum || hoveredPlanet?.house === houseNum || selectedPlanet?.house === houseNum;
+              <div className="grid grid-cols-1 gap-3">
+                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 space-y-2">
+                  <div className="flex justify-between items-center pb-2 border-b border-indigo-100/50">
+                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                        <StarIcon className="w-4 h-4" /> Nakshatra
+                    </p>
+                    <span className="text-[10px] font-black text-indigo-500">Pada {hoveredPlanet.pada}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-base font-black text-slate-800 leading-tight">
+                        {hoveredPlanet.nakshatra}
+                    </p>
+                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter">
+                        Ruling Lord: <span className="text-slate-900">{hoveredPlanet.nakshatraLord}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 bg-emerald-50 border-2 border-emerald-100 rounded-2xl space-y-3 shadow-inner">
+                  <div className="flex justify-between items-center pb-2 border-b border-emerald-200/50">
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                        <Square3Stack3DIcon className="w-5 h-5" /> Navamsha D9
+                    </p>
+                    <span className="px-2 py-0.5 bg-emerald-100 rounded text-[8px] font-black text-emerald-700 uppercase tracking-widest">Soul Essence</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center border border-emerald-200 group-hover:scale-110 transition-transform">
+                        <ZodiacIcon sign={calculateD9Sign(hoveredPlanet.sign, hoveredPlanet.degree)} className="w-8 h-8 text-emerald-600" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-lg font-black text-slate-800 leading-none">
+                        {SIGN_NAMES[calculateD9Sign(hoveredPlanet.sign, hoveredPlanet.degree)]}
+                      </p>
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                        Divisional Root Matrix
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center bg-orange-50/40 px-4 py-3 rounded-2xl border border-orange-100/50">
+                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Longitude</p>
+                <p className="text-xs font-black text-orange-600 font-mono tracking-tighter">
+                   {formatDegrees(hoveredPlanet.degree)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. CHART AREA */}
+      <div className="relative w-full aspect-[4/3] bg-white rounded-[40px] border border-orange-100 shadow-sm select-none p-4 md:p-8">
+        <svg 
+          viewBox={`0 0 ${width} ${height}`} 
+          className="w-full h-full overflow-visible touch-none"
+        >
+          {/* PARENT GROUP HANDLES PANNING (OFFSET) */}
+          <g transform={`translate(${offset.x}, ${offset.y})`} style={{ transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
             
-            return (
-              <g key={i} onMouseEnter={() => setHoveredHouse(houseNum)} onMouseLeave={() => setHoveredHouse(null)}>
-                <path d={getHousePath(houseNum)} fill="transparent" className="cursor-pointer" onClick={() => setHoveredHouse(houseNum)} />
-                <text x={center.x} y={center.y} textAnchor="middle" fontSize={28 * scale} fill={isHouseActive ? "#f97316" : "#fcd4b4"} className={`font-black transition-all duration-300 pointer-events-none ${isHouseActive ? 'opacity-100' : 'opacity-80'}`}>{sign}</text>
-                <g transform={`translate(${center.x}, ${center.y + (28 * scale)})`}>
-                   {planets.map((p, pIdx) => {
-                      const isSelected = selectedPlanet?.planet === p.planet;
-                      const isHovered = hoveredPlanet?.planet === p.planet;
-                      const col = pIdx % 3;
-                      const row = Math.floor(pIdx / 3);
-                      const offsetX = planets.length > 1 ? (col - 1) * (30 * scale) : 0;
-                      const offsetY = row * (22 * scale);
-
-                      return (
-                        <g 
-                          key={pIdx} 
-                          transform={`translate(${offsetX}, ${offsetY})`}
-                          onClick={(e) => { e.stopPropagation(); setSelectedPlanet(p === selectedPlanet ? null : p); }}
-                          onMouseEnter={() => setHoveredPlanet(p)}
-                          onMouseLeave={() => setHoveredPlanet(null)}
-                          className="cursor-pointer"
-                        >
-                          <circle r={14 * scale} fill={isSelected ? "#f97316" : "transparent"} fillOpacity="0.1" />
-                          <text textAnchor="middle" fontSize={18 * scale} fill={isSelected ? "#f97316" : isHovered ? "#f97316" : p.isRetrograde ? "#fa896b" : "#2d2621"} className="font-black">
-                            {getPlanetCode(p.planet)}
-                            {p.isRetrograde && <tspan fontSize={12 * scale} dy={-6 * scale}>*</tspan>}
-                          </text>
-                        </g>
-                      );
-                   })}
-                </g>
+            {/* Geometric Grid remains at SCALE 1 */}
+            <g className="chart-background pointer-events-none">
+              {signCenters.map((_, i) => {
+                const houseNum = i + 1;
+                const isActive = hoveredHouse === houseNum || hoveredPlanet?.house === houseNum || selectedPlanet?.house === houseNum;
+                return (
+                  <path 
+                    key={`bg-${houseNum}`}
+                    d={getHousePath(houseNum)} 
+                    fill={isActive ? "rgba(249, 115, 22, 0.12)" : "transparent"} 
+                    className="transition-all duration-300" 
+                  />
+                );
+              })}
+              <g className="chart-lines">
+                <rect x="0" y="0" width={width} height={height} fill="none" stroke="#e2e8f0" strokeWidth="2" rx="32" />
+                <line x1="0" y1="0" x2={width} y2={height} stroke="#e2e8f0" strokeWidth="1.5" />
+                <line x1={width} y1="0" x2="0" y2={height} stroke="#e2e8f0" strokeWidth="1.5" />
+                <path d={`M${cx} 0 L${width} ${cy} L${cx} ${height} L0 ${cy} Z`} fill="none" stroke="#e2e8f0" strokeWidth="2.5" />
               </g>
-            );
-          })}
+            </g>
+
+            {signCenters.map((center, i) => {
+              const houseNum = i + 1;
+              const sign = getSignForHouse(houseNum);
+              const planets = getPlanetsInHouse(houseNum);
+              const isHouseActive = hoveredHouse === houseNum || hoveredPlanet?.house === houseNum || selectedPlanet?.house === houseNum;
+              
+              return (
+                <g 
+                  key={i} 
+                  onMouseEnter={() => setHoveredHouse(houseNum)} 
+                  onMouseLeave={() => setHoveredHouse(null)}
+                  className="group/house"
+                >
+                  <path 
+                    d={getHousePath(houseNum)} 
+                    fill="transparent" 
+                    className="cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); setHoveredHouse(houseNum); }} 
+                  />
+                  
+                  {/* SIGN NUMBER - SCALE IS APPLIED HERE LOCALLY */}
+                  <g transform={`translate(${center.x}, ${center.y}) scale(${scale})`}>
+                    <circle r="22" fill="white" className="shadow-sm" fillOpacity="0.8" />
+                    <text 
+                      textAnchor="middle" 
+                      alignmentBaseline="middle"
+                      fontSize="24" 
+                      fill={isHouseActive ? "#f97316" : "#475569"} 
+                      className={`font-black transition-all duration-300 pointer-events-none ${isHouseActive ? 'scale-125' : ''}`}
+                    >
+                      {sign}
+                    </text>
+                  </g>
+
+                  {/* PLANETS - SCALE IS APPLIED HERE LOCALLY */}
+                  <g transform={`translate(${center.x}, ${center.y + 35}) scale(${scale})`}>
+                     {planets.map((p, pIdx) => {
+                        const isSelected = selectedPlanet?.planet === p.planet;
+                        const isHovered = hoveredPlanet?.planet === p.planet;
+                        const col = pIdx % 3;
+                        const row = Math.floor(pIdx / 3);
+                        const offsetX = planets.length > 1 ? (col - 1) * 36 : 0;
+                        const offsetY = row * 24;
+
+                        return (
+                          <g 
+                            key={pIdx} 
+                            transform={`translate(${offsetX}, ${offsetY})`}
+                            onClick={(e) => { e.stopPropagation(); onSelectPlanet(p === selectedPlanet ? null : p); }}
+                            onMouseEnter={() => handlePlanetEnter(p)}
+                            onMouseLeave={handlePlanetLeave}
+                            className="cursor-pointer group/planet transition-transform duration-300 hover:scale-125"
+                          >
+                            <circle r="26" fill="transparent" />
+                            <circle 
+                              r={16} 
+                              fill={isSelected || isHovered ? "#f97316" : "transparent"} 
+                              fillOpacity={isHovered && !isSelected ? "0.1" : "0.15"} 
+                              className="transition-all duration-300"
+                            />
+                            <text 
+                              textAnchor="middle" 
+                              fontSize="18" 
+                              fill={isSelected || isHovered ? "#f97316" : p.isRetrograde ? "#f43f5e" : "#1e293b"} 
+                              className="font-black transition-all duration-300"
+                            >
+                              {getPlanetCode(p.planet)}
+                              {p.isRetrograde && <tspan fontSize="12" dy="-6" fill="#f43f5e">*</tspan>}
+                            </text>
+                          </g>
+                        );
+                     })}
+                  </g>
+                </g>
+              );
+            })}
+          </g>
         </svg>
 
         {showLegend && (
-          <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/50 shadow-sm">
-            <div className="flex items-center gap-2">
-              <ZodiacIcon sign={lagnaSign} className="w-4 h-4 text-orange-500" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#2d2621]">Asc: {SIGN_NAMES[lagnaSign]}</span>
+          <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center bg-white/80 backdrop-blur-xl px-6 py-3 rounded-[24px] border border-orange-100 shadow-lg">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2.5 border-r border-slate-100 pr-6">
+                <ZodiacIcon sign={lagnaSign} className="w-5 h-5 text-orange-500" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-800">Asc: {SIGN_NAMES[lagnaSign]}</span>
+              </div>
+              <button 
+                onClick={() => setShowKey(!showKey)}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                <InformationCircleIcon className="w-4 h-4" />
+                Chart Key
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <CursorIcon className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-              <span className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest hidden sm:inline">Explore Matrix</span>
+            <div className="flex items-center gap-3">
+              <ArrowsPointingOutIcon className="w-4 h-4 text-orange-400 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Magnify Data Points</span>
+            </div>
+          </div>
+        )}
+
+        {/* Legend Overlay */}
+        {showKey && (
+          <div className="absolute inset-0 bg-white/98 backdrop-blur-md z-[100] p-10 lg:p-14 animate-in fade-in zoom-in-95 duration-300 rounded-[40px] overflow-y-auto custom-scrollbar">
+            <button 
+              onClick={() => setShowKey(false)}
+              className="absolute top-10 right-10 p-3 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-full transition-all"
+            >
+              <XMarkIcon className="w-7 h-7" />
+            </button>
+            
+            <div className="max-w-2xl mx-auto space-y-12">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 bg-orange-50 rounded-3xl flex items-center justify-center text-orange-500 mx-auto mb-6 shadow-inner">
+                   <SparklesIcon className="w-10 h-10" />
+                </div>
+                <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none">Chart Architecture</h3>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Decoding the North Indian Grid</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-6">
+                  <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-widest pb-3 border-b border-indigo-50">Planet Identifiers</h4>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                    {[
+                      { code: 'Su', name: 'Sun' }, { code: 'Mo', name: 'Moon' },
+                      { code: 'Ma', name: 'Mars' }, { code: 'Me', name: 'Mercury' },
+                      { code: 'Ju', name: 'Jupiter' }, { code: 'Ve', name: 'Venus' },
+                      { code: 'Sa', name: 'Saturn' }, { code: 'Ra', name: 'Rahu' },
+                      { code: 'Ke', name: 'Ketu' }
+                    ].map(p => (
+                      <div key={p.code} className="flex items-center gap-4">
+                        <span className="w-7 text-sm font-black text-slate-800">{p.code}</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase">{p.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="space-y-6">
+                    <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest pb-3 border-b border-orange-50">Symbols & Markers</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <span className="w-8 text-lg font-black text-rose-500">*</span>
+                        <span className="text-xs font-bold text-slate-600">Retrograde (Vakri)</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="w-8 text-base font-black text-indigo-600">1-12</span>
+                        <span className="text-xs font-bold text-slate-600">Zodiac Sign Number (Center)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h4 className="text-[11px] font-black text-emerald-600 uppercase tracking-widest pb-3 border-b border-emerald-50">Spatial Mapping</h4>
+                    <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                      House 1 is always the <span className="text-slate-900 font-black">Top Central Diamond</span>. 
+                      Houses proceed counter-clockwise around the matrix.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-10 border-t border-slate-100 text-center">
+                <p className="text-xs font-bold text-slate-400 leading-relaxed">
+                  Data points scale independently from the chart grid for clarity.<br/>
+                  Click and drag anywhere to pan the view.
+                </p>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {selectedPlanet && (
-        <div className="fixed inset-x-0 bottom-0 md:inset-auto md:right-8 md:bottom-8 z-[5000] bg-white border border-orange-100 shadow-2xl p-6 rounded-t-[32px] md:rounded-[32px] animate-in slide-in-from-bottom-20 duration-500 w-full md:max-w-[440px] max-h-[85vh] overflow-y-auto custom-scrollbar">
-          <div className="w-12 h-1 bg-slate-100 rounded-full mx-auto mb-6 md:hidden" />
-          <button onClick={() => setSelectedPlanet(null)} className="absolute top-6 right-6 p-2 bg-slate-50 hover:bg-orange-50 rounded-full text-orange-500 transition-all">
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 font-black text-2xl border border-orange-100 shadow-inner">
-                {getPlanetCode(selectedPlanet.planet)}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-black text-[#2d2621] text-xl leading-tight">{selectedPlanet.planet}</h3>
-                <div className="flex flex-wrap gap-2 mt-1">
-                   <span className="text-[9px] font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded-lg uppercase border border-orange-100">House {selectedPlanet.house}</span>
-                   {selectedPlanet.isRetrograde && <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-lg uppercase border border-rose-100">Vakri</span>}
-                   {navamshaDetails?.isVargottama && <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg uppercase border border-emerald-100 flex items-center gap-1"><ShieldCheckIcon className="w-3 h-3" /> Vargottama</span>}
-                </div>
-              </div>
-            </div>
-
-            {/* Navamsha Analysis Section - NEW */}
-            <div className="bg-emerald-50/50 border border-emerald-100 rounded-3xl p-5 space-y-4">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                     <AcademicCapIcon className="w-5 h-5 text-emerald-600" />
-                     <h4 className="text-xs font-black text-emerald-900 uppercase tracking-widest">Navamsha Matrix Root (D9)</h4>
-                  </div>
-                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Soul Destiny</span>
-               </div>
-               
-               <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
-                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 Sign</p>
-                     <div className="flex items-center justify-center gap-1.5">
-                        <ZodiacIcon sign={navamshaDetails?.d9Sign || Sign.Aries} className="w-4 h-4 text-emerald-600" />
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-tighter">{SIGN_NAMES[navamshaDetails?.d9Sign || Sign.Aries]}</span>
-                     </div>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
-                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 House</p>
-                     <span className="text-sm font-black text-emerald-600">H{navamshaDetails?.d9House}</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
-                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 Dignity</p>
-                     <span className={`text-[9px] font-black uppercase ${navamshaDetails?.d9Dignity === 'Exalted' ? 'text-emerald-500' : 'text-slate-500'}`}>
-                        {navamshaDetails?.d9Dignity}
-                     </span>
-                  </div>
-               </div>
-
-               <p className="text-[11px] font-bold text-emerald-800 leading-relaxed italic px-1">
-                 "In the D9 chart, {selectedPlanet.planet} indicates the hidden strength of the soul. {navamshaDetails?.isVargottama ? 'Being Vargottama, its fruits are highly stabilized.' : `Its shift to House ${navamshaDetails?.d9House} refines how its energy matures.`}"
-               </p>
-            </div>
-
-            <div className="space-y-4">
-               <div className="p-4 bg-[#fcf8f5] rounded-2xl border border-[#f1ebe6]">
-                  <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1 flex items-center gap-1.5"><InformationCircleIcon className="w-4 h-4 text-orange-400" /> Significance</p>
-                  <p className="text-sm font-bold text-[#2d2621] leading-relaxed">
-                    Influencing <span className="text-orange-600">{houseSignifications[selectedPlanet.house]}</span>. Physical Plane Dignity: {selectedPlanet.dignity || 'Neutral'}.
-                  </p>
-               </div>
-
-               <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-                    <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1">Nakshatra</p>
-                    <p className="text-sm font-black text-orange-600">{selectedPlanet.nakshatra}</p>
-                    <p className="text-[9px] font-bold text-[#8c7e74] uppercase tracking-tighter">Pada {selectedPlanet.pada}</p>
-                  </div>
-                  <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-                    <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1">Coordinates</p>
-                    <div className="flex items-center justify-center gap-1">
-                       <ZodiacIcon sign={selectedPlanet.sign} className="w-4 h-4 text-indigo-400" />
-                       <p className="text-sm font-black text-[#2d2621] font-mono">{formatDegrees(selectedPlanet.degree)}</p>
-                    </div>
-                    <p className="text-[9px] font-bold text-[#8c7e74] uppercase tracking-tighter">{SIGN_NAMES[selectedPlanet.sign]}</p>
-                  </div>
-               </div>
-            </div>
-
-            {selectedPlanetRemedy && (
-              <div className="p-5 bg-indigo-50/40 border border-indigo-100 rounded-[24px] space-y-2">
-                 <p className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <SpeakerWaveIcon className="w-4 h-4" /> Sonic Re-coding
-                 </p>
-                 <p className="text-sm font-black text-indigo-900 leading-snug font-mono italic">"{selectedPlanetRemedy.mantra}"</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

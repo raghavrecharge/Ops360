@@ -17,7 +17,6 @@ import {
   FireIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
-import { PLANET_REMEDY_MAP } from '../services/astrologyService';
 
 interface Props {
   data: PanchangData;

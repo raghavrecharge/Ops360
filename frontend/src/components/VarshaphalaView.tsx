@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { VarshaphalaData } from '../services/astrologyService';
+import React, { useState, useMemo } from 'react';
+import { VarshaphalaData, astrologyService } from '../services/astrologyService';
 import NorthIndianChart from './NorthIndianChart.tsx';
 import SouthIndianChart from './SouthIndianChart.tsx';
 import { 
@@ -17,11 +17,16 @@ import {
   FireIcon,
   HeartIcon,
   CpuChipIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  XMarkIcon,
+  ShieldCheckIcon,
+  SpeakerWaveIcon
 } from '@heroicons/react/24/outline';
-import { Sign } from '../types';
+import { Sign, ChartPoint, Planet } from '../types';
 import ZodiacIcon from './ZodiacIcon';
 import { geminiService } from '../services/geminiService';
+import PlanetDetailsTable from './PlanetDetailsTable';
+import { SIGN_NAMES } from '../constants';
 
 interface Props {
   data: VarshaphalaData;
@@ -32,6 +37,7 @@ interface Props {
 const VarshaphalaView: React.FC<Props> = ({ data, onYearChange, chartStyle = 'North' }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
   
   const years = [2023, 2024, 2025, 2026];
 
@@ -63,8 +69,48 @@ const VarshaphalaView: React.FC<Props> = ({ data, onYearChange, chartStyle = 'No
     }
   };
 
+  const houseSignifications: Record<number, string> = {
+    1: "Self, Physicality, Annual Health",
+    2: "Wealth, Family Assets, Speech",
+    3: "Siblings, Courage, Vitality",
+    4: "Home, Comforts, Happiness",
+    5: "Intelligence, Speculation, Progeny",
+    6: "Enemies, Debts, Challenges",
+    7: "Partnerships, Public Interaction",
+    8: "Transformation, Secrets, Longevity",
+    9: "Fortune, Dharma, Higher Wisdom",
+    10: "Career, Karma, Social Status",
+    11: "Gains, Desires, Network",
+    12: "Expenses, Seclusion, Liberation",
+  };
+
+  const lagnaPoint = data.chart.points.find(p => p.planet === Planet.Lagna);
+
+  const navamshaDetails = useMemo(() => {
+    if (!selectedPoint || !lagnaPoint) return null;
+    const calculateD9Sign = (pSign: number, pDegree: number) => {
+      const totalDegrees = (pSign - 1) * 30 + pDegree;
+      return (Math.floor(totalDegrees * 9 / 30) % 12) + 1;
+    };
+    const d9Sign = calculateD9Sign(selectedPoint.sign, selectedPoint.degree) as Sign;
+    const d9LagnaSign = calculateD9Sign(lagnaPoint.sign, lagnaPoint.degree);
+    const d9House = ((d9Sign - d9LagnaSign + 12) % 12) + 1;
+    
+    const EXALT_SIGNS: Record<string, Sign> = { Sun: Sign.Aries, Moon: Sign.Taurus, Mars: Sign.Capricorn, Mercury: Sign.Virgo, Jupiter: Sign.Cancer, Venus: Sign.Pisces, Saturn: Sign.Libra };
+    const DEBIL_SIGNS: Record<string, Sign> = { Sun: Sign.Libra, Moon: Sign.Scorpio, Mars: Sign.Cancer, Mercury: Sign.Pisces, Jupiter: Sign.Capricorn, Venus: Sign.Virgo, Saturn: Sign.Aries };
+    
+    let d9Dignity = "Neutral";
+    if (EXALT_SIGNS[selectedPoint.planet] === d9Sign) d9Dignity = "Exalted";
+    else if (DEBIL_SIGNS[selectedPoint.planet] === d9Sign) d9Dignity = "Debilitated";
+    
+    const isVargottama = d9Sign === selectedPoint.sign;
+    return { d9Sign, d9House, d9Dignity, isVargottama };
+  }, [selectedPoint, lagnaPoint]);
+
+  const selectedPlanetRemedy = selectedPoint ? astrologyService.getPlanetRemedy(selectedPoint.planet) : null;
+
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-20 relative">
       {/* Premium Header Bar */}
       <div className="bg-white p-10 rounded-[40px] border border-[#f1ebe6] shadow-sm flex flex-col lg:flex-row justify-between items-center gap-10">
         <div className="flex items-center gap-8">
@@ -176,7 +222,7 @@ const VarshaphalaView: React.FC<Props> = ({ data, onYearChange, chartStyle = 'No
                    </div>
                    <h3 className="text-3xl font-black tracking-tight">Synthesize Annual Narrative</h3>
                    <p className="text-sm font-medium text-slate-400 leading-relaxed max-w-lg">
-                     Let the Astro Oracle AI perform a deep-scan of your D1-A matrix, Muntha position, and Tajika Yogas to generate your comprehensive ${data.year} strategy.
+                     Let the Astro Oracle AI perform a deep-scan of your D1-A matrix, Muntha position, and Tajika Yogas to generate your comprehensive {data.year} strategy.
                    </p>
                 </div>
                 <button 
@@ -236,9 +282,21 @@ const VarshaphalaView: React.FC<Props> = ({ data, onYearChange, chartStyle = 'No
                 
                 <div className="w-full mt-16 scale-90 md:scale-100">
                   {chartStyle === 'North' ? (
-                    <NorthIndianChart chart={data.chart} showLegend={true} scale={0.9} />
+                    <NorthIndianChart 
+                      chart={data.chart} 
+                      selectedPlanet={selectedPoint}
+                      onSelectPlanet={setSelectedPoint}
+                      showLegend={true} 
+                      scale={0.9} 
+                    />
                   ) : (
-                    <SouthIndianChart chart={data.chart} showLegend={true} scale={0.9} />
+                    <SouthIndianChart 
+                      chart={data.chart} 
+                      selectedPlanet={selectedPoint}
+                      onSelectPlanet={setSelectedPoint}
+                      showLegend={true} 
+                      scale={0.9} 
+                    />
                   )}
                 </div>
              </div>
@@ -329,6 +387,93 @@ const VarshaphalaView: React.FC<Props> = ({ data, onYearChange, chartStyle = 'No
           </div>
         </div>
       </div>
+
+      {/* 4. PLANET DETAIL POPUP - BREAKOUT MODAL */}
+      {selectedPoint && (
+        <div className="fixed inset-x-0 bottom-0 md:inset-auto md:right-12 md:bottom-12 z-[9999] bg-white border border-orange-100 shadow-2xl p-6 rounded-t-[32px] md:rounded-[32px] animate-in slide-in-from-bottom-20 duration-500 w-full md:max-w-[440px] max-h-[85vh] overflow-y-auto custom-scrollbar">
+          <div className="w-12 h-1 bg-slate-100 rounded-full mx-auto mb-6 md:hidden" />
+          <button onClick={() => setSelectedPoint(null)} className="absolute top-6 right-6 p-2 bg-slate-50 hover:bg-orange-50 rounded-full text-orange-500 transition-all">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 font-black text-2xl border border-orange-100 shadow-inner">
+                {selectedPoint.planet.substring(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-black text-[#2d2621] text-xl leading-tight">{selectedPoint.planet}</h3>
+                <div className="flex flex-wrap gap-2 mt-1">
+                   <span className="text-[9px] font-black text-orange-500 bg-orange-50 px-2 py-0.5 rounded-lg uppercase border border-orange-100">House {selectedPoint.house}</span>
+                   {selectedPoint.isRetrograde && <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-lg uppercase border border-rose-100">Vakri</span>}
+                   {navamshaDetails?.isVargottama && <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg uppercase border border-emerald-100 flex items-center gap-1"><ShieldCheckIcon className="w-3 h-3" /> Vargottama</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-3xl p-5 space-y-4">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                     <AcademicCapIcon className="w-5 h-5 text-emerald-600" />
+                     <h4 className="text-xs font-black text-emerald-900 uppercase tracking-widest">Navamsha Roots (D9)</h4>
+                  </div>
+               </div>
+               <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
+                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 Sign</p>
+                     <div className="flex items-center justify-center gap-1.5">
+                        <ZodiacIcon sign={navamshaDetails?.d9Sign || Sign.Aries} className="w-4 h-4 text-emerald-600" />
+                        <span className="text-xs font-black text-slate-800 tracking-tighter">{SIGN_NAMES[navamshaDetails?.d9Sign || Sign.Aries]}</span>
+                     </div>
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
+                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 House</p>
+                     <span className="text-sm font-black text-emerald-600">H{navamshaDetails?.d9House}</span>
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 text-center">
+                     <p className="text-[8px] font-black text-slate-400 uppercase mb-1">D9 Dignity</p>
+                     <span className={`text-[9px] font-black uppercase ${navamshaDetails?.d9Dignity === 'Exalted' ? 'text-emerald-500' : 'text-slate-500'}`}>
+                        {navamshaDetails?.d9Dignity}
+                     </span>
+                  </div>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <div className="p-4 bg-[#fcf8f5] rounded-2xl border border-[#f1ebe6]">
+                  <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1 flex items-center gap-1.5"><InformationCircleIcon className="w-4 h-4 text-orange-400" /> Annual Significance</p>
+                  <p className="text-sm font-bold text-[#2d2621] leading-relaxed">
+                    Influencing <span className="text-orange-600">{houseSignifications[selectedPoint.house]}</span>. Position: {selectedPoint.dignity || 'Neutral'}.
+                  </p>
+               </div>
+
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
+                    <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1">Nakshatra</p>
+                    <p className="text-sm font-black text-orange-600">{selectedPoint.nakshatra}</p>
+                    <p className="text-[9px] font-bold text-[#8c7e74] uppercase">Pada {selectedPoint.pada}</p>
+                  </div>
+                  <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
+                    <p className="text-[9px] font-black text-[#8c7e74] uppercase tracking-widest mb-1">Coordinates</p>
+                    <div className="flex items-center justify-center gap-1">
+                       <ZodiacIcon sign={selectedPoint.sign} className="w-4 h-4 text-indigo-400" />
+                       <p className="text-sm font-black text-[#2d2621] font-mono">{formatDegrees(selectedPoint.degree)}</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            {selectedPlanetRemedy && (
+              <div className="p-5 bg-indigo-50/40 border border-indigo-100 rounded-[24px] space-y-2">
+                 <p className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <SpeakerWaveIcon className="w-4 h-4" /> Sonic Re-coding
+                 </p>
+                 <p className="text-sm font-black text-indigo-900 leading-snug font-mono italic">"{selectedPlanetRemedy.mantra}"</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

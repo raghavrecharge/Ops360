@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CompatibilityData } from '../types';
+import { CompatibilityData, BirthData } from '../types';
 import { 
   HeartIcon, 
   ShieldCheckIcon, 
@@ -12,13 +12,19 @@ import {
   CheckBadgeIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import CompatibilityForm from './CompatibilityForm';
 
 interface Props {
-  data: CompatibilityData;
-  onReset?: () => void;
+  data: CompatibilityData | null;
+  onReset: () => void;
+  onCalculate: (partnerData: BirthData) => Promise<void>;
 }
 
-const CompatibilityView: React.FC<Props> = ({ data, onReset }) => {
+const CompatibilityView: React.FC<Props> = ({ data, onReset, onCalculate }) => {
+  if (!data) {
+    return <CompatibilityForm onCalculate={onCalculate} />;
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 25) return 'text-emerald-500';
     if (score >= 18) return 'text-amber-500';
@@ -55,14 +61,12 @@ const CompatibilityView: React.FC<Props> = ({ data, onReset }) => {
                {data.totalScore >= 18 ? <CheckBadgeIcon className="w-5 h-5" /> : <ExclamationTriangleIcon className="w-5 h-5" />}
                {data.summary}
              </div>
-             {onReset && (
-               <button 
-                onClick={onReset}
-                className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest hover:border-orange-500 hover:text-orange-500 transition-all flex items-center gap-2"
-               >
-                 <ArrowPathIcon className="w-4 h-4" /> New Match
-               </button>
-             )}
+             <button 
+              onClick={onReset}
+              className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest hover:border-orange-500 hover:text-orange-500 transition-all flex items-center gap-2"
+             >
+               <ArrowPathIcon className="w-4 h-4" /> New Match
+             </button>
           </div>
         </div>
 
