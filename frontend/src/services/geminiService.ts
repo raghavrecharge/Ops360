@@ -4,6 +4,7 @@
  */
 
 import { DivisionalChart, ChatMessage, YogaMatch } from '../types';
+import { VarshaphalaData } from './astrologyService';
 
 export const geminiService = {
   /**
@@ -47,6 +48,20 @@ export const geminiService = {
    */
   async interpretChart(chart: DivisionalChart): Promise<string> {
     return 'Chart interpretation requires backend AI service.';
+  },
+
+  /**
+   * Interpret Varshaphala data
+   */
+  async interpretVarshaphala(data: VarshaphalaData): Promise<string> {
+    const yearLord = data.yearLord;
+    const age = data.age;
+    const munthaSign = data.muntha?.signName || data.munthaSign;
+
+    return `For your ${age}th year, with ${yearLord} as the year lord and Muntha in ${munthaSign}, ` +
+           `this year promises growth in areas governed by ${yearLord}. ` +
+           `The Muntha position suggests focus on the themes of the ${data.muntha?.house || data.munthaHouse}th house. ` +
+           `Key periods to watch are during the Mudda Dasha of benefic planets.`;
   },
 };
 
