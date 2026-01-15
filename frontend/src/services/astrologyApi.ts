@@ -18,7 +18,7 @@ import {
   Sign
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || process.env.REACT_APP_BACKEND_URL || '';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
 
 // Helper to get auth token
 const getAuthToken = (): string | null => {
