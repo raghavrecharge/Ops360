@@ -61,6 +61,14 @@ export interface AshtakavargaData {
   planetScores: Record<string, number[]>;
   sarvashtaka: number[];
   total: number;
+  sav: number[];
+  bav: Record<string, number[]>;
+  planetTotals: Record<string, number>;
+  summary: {
+    strongest: string;
+    weakest: string;
+    avgScore: number;
+  };
 }
 
 // Varshaphala Data type
