@@ -449,6 +449,27 @@ export const astrologyService = {
 
     const chart = this.calculateNatalChart({ ...birthData, dob: `${year}-${dob.getMonth() + 1}-${dob.getDate()}` });
 
+    // Generate Mudda Dashas
+    const muddaDashas = PLANET_ORDER.filter(p => p !== Planet.Lagna).slice(0, 5).map((planet, i) => ({
+      planet,
+      start: new Date(year, i * 2, 1).toISOString(),
+      end: new Date(year, (i + 1) * 2, 1).toISOString(),
+      duration: 60,
+    }));
+
+    // Generate Sahams
+    const sahams = [
+      { name: 'Punya Saham', sign: munthaSign as Sign, degree: 15, signName: SIGN_NAMES_MAP[munthaSign] },
+      { name: 'Vidya Saham', sign: ((munthaSign + 2) % 12 + 1) as Sign, degree: 22, signName: SIGN_NAMES_MAP[((munthaSign + 2) % 12 + 1)] },
+      { name: 'Karma Saham', sign: ((munthaSign + 5) % 12 + 1) as Sign, degree: 8, signName: SIGN_NAMES_MAP[((munthaSign + 5) % 12 + 1)] },
+    ];
+
+    // Generate Yogas
+    const yogas = [
+      { name: 'Ithasala Yoga', description: 'Applying aspect between year lord and lagna lord', strength: 75 },
+      { name: 'Ishrafa Yoga', description: 'Separating aspect indicating past events', strength: 45 },
+    ];
+
     return {
       year,
       age,
@@ -457,6 +478,9 @@ export const astrologyService = {
         house: munthaSign,
         signName: SIGN_NAMES_MAP[munthaSign],
       },
+      munthaSign: SIGN_NAMES_MAP[munthaSign],
+      munthaHouse: munthaSign,
+      ascendant: SIGN_NAMES_MAP[chart.points[0]?.sign || 1],
       yearLord,
       chart,
       predictions: [
@@ -465,7 +489,77 @@ export const astrologyService = {
         { house: 7, area: 'Relationships', prediction: 'Partnerships require attention and care.', strength: 'Moderate' },
         { house: 10, area: 'Career', prediction: 'Professional recognition likely.', strength: 'Strong' },
       ],
+      muddaDashas,
+      sahams,
+      yogas,
     };
+  },
+
+  /**
+   * Validate birth data
+   */
+  validateBirthData(data: BirthData): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!data.name || data.name.trim().length === 0) {
+      errors.push('Name is required');
+    }
+    if (!data.dob) {
+      errors.push('Date of birth is required');
+    }
+    if (!data.tob) {
+      errors.push('Time of birth is required');
+    }
+    if (data.lat < -90 || data.lat > 90) {
+      errors.push('Invalid latitude');
+    }
+    if (data.lng < -180 || data.lng > 180) {
+      errors.push('Invalid longitude');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  },
+
+  /**
+   * Get planet remedy information
+   */
+  getPlanetRemedy(planet: Planet): { gemstone: string; mantra: string; day: string; color: string } {
+    const remedies: Record<string, { gemstone: string; mantra: string; day: string; color: string }> = {
+      [Planet.Sun]: { gemstone: 'Ruby', mantra: 'Om Suryaya Namah', day: 'Sunday', color: 'Red' },
+      [Planet.Moon]: { gemstone: 'Pearl', mantra: 'Om Chandraya Namah', day: 'Monday', color: 'White' },
+      [Planet.Mars]: { gemstone: 'Red Coral', mantra: 'Om Mangalaya Namah', day: 'Tuesday', color: 'Red' },
+      [Planet.Mercury]: { gemstone: 'Emerald', mantra: 'Om Budhaya Namah', day: 'Wednesday', color: 'Green' },
+      [Planet.Jupiter]: { gemstone: 'Yellow Sapphire', mantra: 'Om Gurave Namah', day: 'Thursday', color: 'Yellow' },
+      [Planet.Venus]: { gemstone: 'Diamond', mantra: 'Om Shukraya Namah', day: 'Friday', color: 'White' },
+      [Planet.Saturn]: { gemstone: 'Blue Sapphire', mantra: 'Om Shanaischaraya Namah', day: 'Saturday', color: 'Blue' },
+      [Planet.Rahu]: { gemstone: 'Hessonite', mantra: 'Om Rahave Namah', day: 'Saturday', color: 'Brown' },
+      [Planet.Ketu]: { gemstone: "Cat's Eye", mantra: 'Om Ketave Namah', day: 'Thursday', color: 'Grey' },
+    };
+    return remedies[planet] || remedies[Planet.Sun];
+  },
+
+  /**
+   * Get house lordship information
+   */
+  getHouseLordship(sign: Sign): { lord: Planet; nature: string } {
+    const lordships: Record<number, { lord: Planet; nature: string }> = {
+      1: { lord: Planet.Mars, nature: 'Fiery' },
+      2: { lord: Planet.Venus, nature: 'Earthy' },
+      3: { lord: Planet.Mercury, nature: 'Airy' },
+      4: { lord: Planet.Moon, nature: 'Watery' },
+      5: { lord: Planet.Sun, nature: 'Fiery' },
+      6: { lord: Planet.Mercury, nature: 'Earthy' },
+      7: { lord: Planet.Venus, nature: 'Airy' },
+      8: { lord: Planet.Mars, nature: 'Watery' },
+      9: { lord: Planet.Jupiter, nature: 'Fiery' },
+      10: { lord: Planet.Saturn, nature: 'Earthy' },
+      11: { lord: Planet.Saturn, nature: 'Airy' },
+      12: { lord: Planet.Jupiter, nature: 'Watery' },
+    };
+    return lordships[sign] || lordships[1];
   },
 
   /**
