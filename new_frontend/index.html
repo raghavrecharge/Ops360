@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro Jyotish | Vedic Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f97316;
+            --primary-light: #fff7ed;
+            --secondary: #fbbf24;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-body: #fdfcfb;
+            --bg-surface: #ffffff;
+            --text-main: #1e293b; /* slate-800 */
+            --text-sub: #475569; /* slate-600 */
+            --text-muted: #94a3b8; /* slate-400 */
+            --border-color: #f1ebe6;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-sub); 
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: #e5d5cc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .sidebar-active {
+            background-color: var(--primary);
+            color: #fff !important;
+            box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2);
+        }
+        
+        .card-standard {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .interactive-element {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+        .interactive-element:active {
+            transform: scale(0.97);
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .pulse-effect {
+            position: relative;
+        }
+        .pulse-effect::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 2px solid var(--primary);
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@^1.4.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
