@@ -33,7 +33,7 @@ const BirthDataForm: React.FC<Props> = ({ onCalculate, initialData }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validation = astrologyService.validateBirthData(formData);
-    if (!validation.isValid) {
+    if (!validation.valid) {
       setErrors(validation.errors);
       return;
     }
