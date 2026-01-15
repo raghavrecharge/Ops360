@@ -23,7 +23,9 @@ export interface BirthData {
   tob: string;
   lat: number;
   lng: number;
-  tz: string;
+  tz?: string;
+  place?: string;
+  timezone?: string;
   isVerified?: boolean;
 }
 
