@@ -75,9 +75,12 @@ export const vehiclesAPI = {
 };
 
 export const driversAPI = {
-  getAll: () => api.get('/drivers'),
+  getAll: (vendorId = null) => api.get('/drivers', { params: vendorId ? { vendor_id: vendorId } : {} }),
   getOne: (id) => api.get(`/drivers/${id}`),
   create: (data) => api.post('/drivers', data),
+  update: (id, data) => api.put(`/drivers/${id}`, data),
+  delete: (id) => api.delete(`/drivers/${id}`),
+  assignVehicle: (driverId, vehicleId) => api.post(`/drivers/${driverId}/assign-vehicle/${vehicleId}`),
 };
 
 export const promotersAPI = {
