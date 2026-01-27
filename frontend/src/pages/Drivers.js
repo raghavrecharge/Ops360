@@ -117,7 +117,7 @@ const Drivers = () => {
       resetForm();
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to update driver');
+      toast.error(getErrorMessage(error) || 'Failed to update driver');
     },
   });
 
@@ -130,7 +130,7 @@ const Drivers = () => {
       setSelectedDriver(null);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete driver');
+      toast.error(getErrorMessage(error) || 'Failed to delete driver');
     },
   });
 
