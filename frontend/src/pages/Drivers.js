@@ -83,6 +83,17 @@ const Drivers = () => {
     queryFn: () => vehiclesAPI.getAll().then(res => res.data),
   });
 
+  // Helper to extract error message from API response
+  const getErrorMessage = (error) => {
+    const detail = error.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+      // Handle validation errors (422)
+      return detail.map(e => e.msg || e.message || JSON.stringify(e)).join(', ');
+    }
+    return 'An error occurred';
+  };
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data) => driversAPI.create(data),
@@ -93,7 +104,7 @@ const Drivers = () => {
       resetForm();
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to create driver');
+      toast.error(getErrorMessage(error) || 'Failed to create driver');
     },
   });
 
