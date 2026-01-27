@@ -16,3 +16,4 @@ class Vehicle(Base, BaseModel):
     
     # Relationships
     vendor = relationship("Vendor", back_populates="vehicles")
+    assigned_driver = relationship("Driver", back_populates="assigned_vehicle", foreign_keys="Driver.assigned_vehicle_id")
